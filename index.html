@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05040f">
+<title>آيفورو · نظام إدارة المطاعم</title>
+<link rel="canonical" href="https://aivoropos.com/">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="keywords" content="برنامج كاشير، برنامج مطاعم، نظام مطاعم، نظام إدارة مطاعم، كاشير مطعم، برنامج محاسبة مطاعم، نظام نقاط بيع، تطبيق توصيل مطاعم، جهاز بصمة، آيفورو">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="آيفورو">
+<meta property="og:locale" content="ar_IQ">
+<meta property="og:url" content="https://aivoropos.com/">
+<meta property="og:title" content="آيفورو · نظام إدارة المطاعم">
+<meta property="og:description" content="مطعمك يستحق نظاماً يحسب كل شيء عنك: الكاشير والمطبخ والتوصيل والمخزن والموظفون في مكان واحد.">
+<meta property="og:image" content="https://aivoropos.com/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"آيفورو","alternateName":"Aivoro","applicationCategory":"BusinessApplication","operatingSystem":"Windows, Android","description":"نظام كاشير وإدارة مطاعم: الكاشير والمطبخ والتوصيل والمخزن والموظفون في مكان واحد.","url":"https://aivoropos.com/"}</script>
+<meta name="description" content="آيفورو: نظام كاشير وإدارة مطاعم يحسب كل شيء عنك. تطبيقات السنتر والسائق والمطبخ وصاحب المطعم مجاناً بلا اشتراك شهري.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&display=swap">
+<style>
+  /* The site: the night Earth turning behind everything (canvas), the real devices floating before it, glass panels of words over it.
+     One font, the program's own. Arabic first; English swaps every text in place and mirrors the page. */
+  :root { --ink: #f4f1ff; --soft: #b9b2dc; --pink: #ff4fd8; --glass: rgba(24, 14, 62, .42); --edge: rgba(255, 255, 255, .14); --wa: #25d366; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { background: #05040f; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body { margin: 0; font-family: 'Readex Pro', 'Segoe UI', Tahoma, sans-serif; color: var(--ink); overflow-x: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; display: block; }
+  /* A soft night shade on the words' side only, so they read clearly over the bright ground; the map side stays bare. */
+  body::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(to left, rgba(10, 7, 32, .86) 0%, rgba(10, 7, 32, .6) 30%, rgba(10, 7, 32, 0) 58%); }
+  :root[dir=ltr] body::after { background: linear-gradient(to right, rgba(10, 7, 32, .86) 0%, rgba(10, 7, 32, .6) 30%, rgba(10, 7, 32, 0) 58%); }
+  @media (max-width: 820px) { body::after, :root[dir=ltr] body::after { background: linear-gradient(to bottom, rgba(10, 7, 32, .7) 0%, rgba(10, 7, 32, .3) 32%, rgba(10, 7, 32, .15) 50%, rgba(10, 7, 32, .1) 68%, rgba(10, 7, 32, .3) 100%); } h1, p.lead { text-shadow: 0 2px 14px rgba(5, 3, 20, .85); } }
+
+  nav { position: fixed; inset: 0 0 auto; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: calc(14px + env(safe-area-inset-top)) clamp(16px, 4vw, 48px) 14px; }
+  .brand { font-weight: 700; font-size: 25px; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+  .brand i { width: 12px; height: 12px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 18px var(--pink); }
+  .links { display: flex; gap: 4px; padding: 6px; border-radius: 99px; background: var(--glass); border: 1px solid var(--edge); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .links a { color: var(--soft); text-decoration: none; font-size: 14px; font-weight: 600; padding: 8px 15px; border-radius: 99px; transition: color .2s, background .2s; }
+  .links a.on { color: #fff; background: rgba(139, 108, 255, .35); }
+  .tools { display: flex; gap: 10px; align-items: center; }
+  .lang { font: 700 14px 'Readex Pro', sans-serif; color: #fff; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--edge); background: var(--glass); cursor: pointer; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); touch-action: manipulation; }
+  @media (hover: hover) and (pointer: fine) { .links a:hover, .lang:hover { color: #fff; } .btn:hover { transform: translateY(-2px); } }
+  .btn { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 700 16px 'Readex Pro', sans-serif; color: #fff; padding: 14px 24px; border-radius: 16px; border: 1px solid var(--edge); background: var(--glass); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); transition: transform .2s; touch-action: manipulation; }
+  .btn:active, .lang:active { transform: scale(.97); }
+  .btn.wa { background: linear-gradient(135deg, #2be27a, #14a650); border-color: transparent; box-shadow: 0 10px 30px rgba(37, 211, 102, .35); }
+  .btn.small { padding: 10px 16px; font-size: 14px; border-radius: 12px; }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+
+  section { min-height: 100svh; display: flex; align-items: center; padding: 120px clamp(16px, 6vw, 96px) 80px; }
+  .text { width: min(560px, 100%); }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #e6dcff; padding: 7px 14px; border-radius: 99px; background: rgba(139, 108, 255, .18); border: 1px solid rgba(139, 108, 255, .4); }
+  .kicker::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 10px var(--pink); }
+  h1, h2 { font-weight: 700; line-height: 1.3; margin: 18px 0 16px; letter-spacing: -.01em; }
+  h1 { font-size: clamp(38px, 5vw, 68px); }
+  h2 { font-size: clamp(30px, 4vw, 52px); }
+  :root[lang=en] h1 { font-size: clamp(34px, 4vw, 56px); }
+  :root[lang=en] #hero .text { width: min(640px, 100%); }
+  .glow { background: linear-gradient(90deg, #ffffff, #d9c9ff 40%, #ff8be6); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0 .06em .14em; margin: 0 -.06em -.14em; }
+  p.lead { font-size: clamp(17px, 1.5vw, 20px); line-height: 1.9; color: var(--soft); margin: 0 0 28px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .panel { padding: clamp(22px, 3vw, 36px); border-radius: 28px; background: var(--glass); border: 1px solid var(--edge); -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%); box-shadow: 0 30px 60px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08); }
+  .ticks { list-style: none; margin: 0 0 4px; padding: 0; display: grid; gap: 12px; }
+  .ticks li { display: flex; gap: 12px; align-items: flex-start; font-size: 17px; line-height: 1.7; }
+  .ticks li::before { content: ''; flex: none; width: 22px; height: 22px; margin-top: 4px; border-radius: 8px; background: rgba(61, 220, 151, .18) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233ddc97' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center / 14px no-repeat; }
+  .apps { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 8px; }
+  .app { position: relative; padding: 16px; border-radius: 18px; background: rgba(255, 255, 255, .06); border: 1px solid var(--edge); }
+  .app b { display: block; font-size: 17px; margin-bottom: 4px; }
+  .app span { font-size: 14px; color: var(--soft); line-height: 1.6; }
+  .free { position: absolute; top: -10px; inset-inline-end: 12px; font-style: normal; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: linear-gradient(135deg, #ff4fd8, #8b6cff); box-shadow: 0 6px 18px rgba(255, 79, 216, .4); }
+
+
+  #features { display: block; }
+  #features .head { max-width: 680px; margin-bottom: 10px; }
+  /* Features: two to a row, each a pane of thick glass: the map shows through softly bent and brightened, a light
+     catches its top edge, and the words sit on a clearer part of it. The screen fills the top, its device's stand cut off. */
+  .fgroup { margin: 40px 0 16px; }
+  .fhead { display: inline-block; margin: 0; font-size: 24px; font-weight: 700; color: #fff; padding: 9px 20px; border-radius: 16px; background: rgba(139, 108, 255, .3); border: 1px solid rgba(255, 255, 255, .2); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 20px; }
+  .feat { position: relative; isolation: isolate; display: grid; grid-template-rows: auto 1fr; border-radius: 30px; overflow: hidden; color: #14234d;
+    background: linear-gradient(165deg, rgba(255, 255, 255, .34), rgba(235, 228, 255, .18) 45%, rgba(255, 255, 255, .26));
+    -webkit-backdrop-filter: blur(14px) saturate(185%) brightness(1.18) contrast(1.04); backdrop-filter: blur(14px) saturate(185%) brightness(1.18) contrast(1.04);
+    border: 1px solid rgba(255, 255, 255, .55);
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .85), inset 0 -1px 0 rgba(255, 255, 255, .25), inset 0 0 40px rgba(255, 255, 255, .12), 0 24px 50px rgba(5, 3, 25, .45); }
+  /* the lens: a bright curved highlight across the top corner and a soft glow along the far edge, as thick glass bends light */
+  .feat::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+    background: radial-gradient(120% 60% at 15% -10%, rgba(255, 255, 255, .55), transparent 55%), radial-gradient(80% 50% at 110% 110%, rgba(190, 170, 255, .35), transparent 60%); }
+  .feat::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; padding: 1.5px;
+    background: linear-gradient(140deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .1) 40%, rgba(255, 255, 255, .05) 60%, rgba(200, 180, 255, .7));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  .feat figure { margin: 0; height: 330px; padding: 22px 22px 0; display: flex; justify-content: center; overflow: hidden; }
+  .feat figure img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0%; border-radius: 18px 18px 0 0; filter: drop-shadow(0 16px 24px rgba(10, 8, 40, .35)); }
+  .feat figure.tall img { width: 74%; object-position: 50% 14%; }
+  .feat div { padding: 22px 28px 28px; background: rgba(255, 255, 255, .66); }
+  .feat .n { font-weight: 700; font-size: 15px; color: #7c4dff; }
+  .feat h3 { margin: 4px 0 10px; font-size: 26px; line-height: 1.4; color: #14234d; }
+  .feat p { margin: 0; color: #33405f; line-height: 1.85; font-size: 18px; }
+  /* the fingerprint clock beside the program's attendance list, a dotted line of light between them */
+  .feat.wide-card { grid-column: 1 / -1; }
+  .feat figure.pair { gap: 4%; align-items: center; justify-content: center; height: 360px; }
+  .feat figure.pair img { width: auto; height: 92%; object-fit: contain; border-radius: 0; }
+  .feat figure.pair img.screen { height: 86%; max-width: 52%; }
+  .feat figure.pair .link { flex: 0 0 13%; height: 6px; border-radius: 3px; background: repeating-linear-gradient(90deg, #2ecc71 0 10px, transparent 10px 20px); background-size: 40px 6px; animation: flow 1s linear infinite; filter: drop-shadow(0 0 6px rgba(46, 204, 113, .8)); }
+  :root[dir=rtl] .feat figure.pair .link { animation-direction: reverse; }
+  @keyframes flow { to { background-position: 40px 0; } }
+  @media (max-width: 820px) {
+    .feat figure { height: 250px; padding: 16px 16px 0; } .feat h3 { font-size: 23px; } .feat p { font-size: 17px; } .feat div { padding: 18px 20px 22px; }
+    .feat figure.pair { height: 230px; }
+  }
+
+  /* the later parts: the reel, the three steps, the questions, support */
+  #start, #faq, #video { display: block; }
+  .head2 { max-width: 720px; margin-bottom: 26px; }
+  .glass { position: relative; border-radius: 26px; color: #fff; background: rgba(30, 18, 80, .45); border: 1px solid rgba(255, 255, 255, .18); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 20px 44px rgba(0, 0, 0, .35); }
+  .video { display: grid; grid-template-columns: minmax(0, 360px) 1fr; gap: 34px; align-items: center; }
+  .video video { width: 100%; aspect-ratio: 9 / 16; border-radius: 26px; background: #000; box-shadow: 0 30px 60px rgba(0, 0, 0, .5); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 18px; counter-reset: step; }
+  .step { padding: 28px; }
+  .step b { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; font-size: 24px; background: linear-gradient(135deg, #ff4fd8, #8b6cff); margin-bottom: 14px; }
+  .step h3 { margin: 0 0 8px; font-size: 23px; }
+  .step p { margin: 0; color: var(--soft); line-height: 1.85; font-size: 17px; }
+  .faq { display: grid; gap: 12px; max-width: 900px; }
+  .faq details { padding: 0 24px; }
+  .faq summary { cursor: pointer; list-style: none; padding: 20px 0; font-size: 19px; font-weight: 700; display: flex; justify-content: space-between; gap: 16px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; font-size: 26px; line-height: 1; color: #c9b8ff; transition: transform .25s; }
+  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq p { margin: 0 0 20px; color: var(--soft); line-height: 1.9; font-size: 17px; }
+  .support { margin-top: 22px; padding: 24px 28px; display: flex; gap: 18px; align-items: center; }
+  .support b { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; font-size: 26px; background: rgba(61, 220, 151, .2); }
+  .support p { margin: 0; font-size: 18px; line-height: 1.8; }
+  @media (max-width: 820px) { .video { grid-template-columns: 1fr; } .video video { max-width: 320px; margin: 0 auto; display: block; } }
+
+  #contact { justify-content: center; text-align: center; }
+  #contact .text { width: min(720px, 100%); }
+  #contact .row { justify-content: center; }
+  .phone-num { direction: ltr; unicode-bidi: isolate; font-weight: 700; font-size: clamp(28px, 4vw, 40px); letter-spacing: 1px; margin: 22px 0 6px; }
+  footer { text-align: center; color: var(--soft); font-size: 14px; padding: 24px 16px calc(28px + env(safe-area-inset-bottom)); }
+
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2, .8, .2, 1), transform .9s cubic-bezier(.2, .8, .2, 1); }
+  .reveal.in { opacity: 1; transform: none; }
+  .float-wa { position: fixed; z-index: 11; inset-inline-end: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--wa); box-shadow: 0 10px 30px rgba(37, 211, 102, .45); }
+  .float-wa svg { width: 30px; height: 30px; }
+
+  /* Phones: the devices sit in the lower half, so the words take the top and stay readable over them. */
+  @media (max-width: 820px) {
+    .links { display: none; }
+    section { align-items: flex-start; padding-top: 104px; }
+    #hero, #cashier, #apps, #owner { padding-bottom: 52svh; }
+    h1 { font-size: 34px; }
+    .apps { grid-template-columns: 1fr 1fr; }
+    .app { padding: 12px; }
+    .feat figure { height: 220px; }
+  }
+
+  /* The cities on the Earth: a gold point that breathes, its name beside it in small clear letters. */
+  .cities { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  /* Each mark is pinned by its point; the name sits to the west of it, or to the east («far») when a neighbour is there. */
+  .city { position: absolute; top: 0; left: 0; width: 0; height: 0; will-change: transform, opacity; }
+  .city i { position: absolute; left: -3.5px; top: -3.5px; width: 7px; height: 7px; border-radius: 50%; background: #ffe2a3; box-shadow: 0 0 8px 2px rgba(255, 200, 90, .8); }
+  .city i::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1.5px solid rgba(255, 210, 120, .85); animation: ping 2.4s var(--d) infinite cubic-bezier(.2, .6, .3, 1); }
+  .city.big i { left: -4.5px; top: -4.5px; width: 9px; height: 9px; }
+  .city span { position: absolute; top: -10px; right: 10px; font-size: 13px; font-weight: 600; line-height: 20px; color: #fff3da; white-space: nowrap; padding: 0 7px; border-radius: 8px; background: rgba(12, 8, 34, .62); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .city.far span { right: auto; left: 10px; }
+  .city.big span { font-size: 15px; font-weight: 700; }  @media (max-width: 820px) { .city:not(.big) { display: none; } }
+  @keyframes ping { from { transform: scale(.4); opacity: 1; } to { transform: scale(2.6); opacity: 0; } }
+
+  /* The order notices: small glass cards that rise beside the devices, one after another. */
+  section { position: relative; }
+  .toasts { position: absolute; inset-block: 0; inset-inline-end: clamp(16px, 6vw, 96px); width: min(42vw, 520px); pointer-events: none; }
+  .toast { position: absolute; display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: 16px; font-size: 14px; font-weight: 600; white-space: nowrap;
+    background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 14px 30px rgba(0, 0, 0, .3);
+    opacity: 0; animation: notice 9s infinite; }
+  .toast b { width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; font-size: 14px; background: rgba(61, 220, 151, .25); }
+  .toast:nth-child(1) { top: 16%; inset-inline-start: 4%; }
+  .toast:nth-child(2) { top: 62%; inset-inline-start: 46%; animation-delay: 3s; }
+  .toast:nth-child(3) { top: 80%; inset-inline-start: 2%; animation-delay: 6s; }
+  @keyframes notice { 0% { opacity: 0; transform: translateY(14px) scale(.96); } 6%, 30% { opacity: 1; transform: none; } 38%, 100% { opacity: 0; transform: translateY(-10px); } }
+  @media (max-width: 820px) {
+    .toasts { inset-inline: 16px; inset-block: auto 4svh; height: 30svh; width: auto; }
+    .toast { font-size: 13px; }
+    .toast:nth-child(1) { top: 0; inset-inline-start: 0; } .toast:nth-child(2) { top: 40%; inset-inline-start: 18%; } .toast:nth-child(3) { top: 78%; inset-inline-start: 4%; }
+  }
+  @media (prefers-reduced-motion: reduce) { .toast { animation: none; opacity: 1; } .city i::after { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .reveal { opacity: 1; transform: none; transition: none; } }
+</style>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<nav>
+  <a class="brand" href="#hero"><i></i><span data-en="Aivoro">آيفورو</span></a>
+  <div class="links">
+    <a href="#cashier" data-en="Cashier">الكاشير</a><a href="#apps" data-en="Apps">التطبيقات</a><a href="#owner" data-en="Owner">صاحب المطعم</a><a href="#features" data-en="Features">الميزات</a><a href="#faq" data-en="Questions">الأسئلة</a>
+  </div>
+  <div class="tools">
+    <button class="lang" type="button" id="lang" aria-label="English">EN</button>
+    <a class="btn wa small" data-wa href="#"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.4-5.1-4.6-.2-.2-1.2-1.6-1.2-3.1s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.2.6.4.1.1.1.8-.1 1.5z"/></svg><span data-en="Contact us">تواصل معنا</span></a>
+  </div>
+</nav>
+
+<main>
+  <section id="hero">
+    <div class="text">
+      <span class="kicker reveal" data-en="Restaurant management system">نظام إدارة المطاعم</span>
+      <h1 class="reveal" data-en='Your restaurant deserves a system <span class="glow">that counts everything for you</span>'>مطعمك يستحق نظاماً <span class="glow">يحسب كل شيء عنك</span></h1>
+      <p class="lead reveal" data-en="From the first order to the last coin: the till, the kitchen, delivery, stock and staff in one place, and you watch it all from your phone wherever you are.">من أول طلب إلى آخر دينار: الكاشير والمطبخ والتوصيل والمخزن والموظفون في مكان واحد، وأنت تراقب كل شيء من هاتفك أينما كنت.</p>
+      <div class="row reveal">
+        <a class="btn wa" data-wa href="#"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.4-5.1-4.6-.2-.2-1.2-1.6-1.2-3.1s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.2.6.4.1.1.1.8-.1 1.5z"/></svg><span data-en="Contact us">تواصل معنا</span></a>
+        <a class="btn" href="#features" data-en="See the features">شاهد الميزات</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="cashier">
+    <div class="toasts" aria-hidden="true"><div class="toast"><b>🧾</b><span data-en="New order #86 · Takeaway · 17,000 IQD">طلب جديد #86 · سفري · 17,000 د.ع</span></div><div class="toast"><b>✓</b><span data-en="Sent to the kitchen">أُرسل إلى المطبخ</span></div><div class="toast"><b>📞</b><span data-en="Incoming call: Samer · regular">مكالمة واردة: سامر · زبون دائم</span></div></div>
+    <div class="text panel reveal">
+      <span class="kicker" data-en="Cashier">الكاشير</span>
+      <h2 data-en='Sell faster, <span class="glow">without mistakes</span>'>بيع أسرع، <span class="glow">وبلا أخطاء</span></h2>
+      <ul class="ticks">
+        <li data-en="Dine-in, takeaway and delivery from one screen; each order reaches the kitchen the moment it is sent.">صالة وسفري وتوصيل من شاشة واحدة، والطلب يصل إلى المطبخ لحظة إرساله.</li>
+        <li data-en="Phone and WhatsApp calls inside the program: the caller's name and past orders appear before you answer.">مكالمات الشريحة والواتساب داخل البرنامج: يظهر اسم الزبون وطلباته السابقة قبل أن تجيب.</li>
+        <li data-en="Cash, card or dollars, and the drawer always knows what it should hold.">الدفع نقداً أو بالبطاقة أو بالدولار، والصندوق يعرف ما يجب أن يكون فيه.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="apps">
+    <div class="toasts" aria-hidden="true"><div class="toast"><b>🛵</b><span data-en="Driver Zaid picked up order #12">السائق زيد استلم الطلب #12</span></div><div class="toast"><b>🍽️</b><span data-en="Order #4 is ready">الطلب #4 جاهز للتسليم</span></div><div class="toast"><b>✓</b><span data-en="Order #12 delivered">وصل الطلب #12</span></div></div>
+    <div class="text panel reveal">
+      <span class="kicker" data-en="Apps">التطبيقات</span>
+      <h2 data-en='Four apps, <span class="glow">free</span>, with no monthly fee'>أربعة تطبيقات <span class="glow">مجاناً</span>، بلا اشتراك شهري</h2>
+      <div class="apps">
+        <div class="app"><i class="free" data-en="Free">مجاناً</i><b data-en="Dispatch desk">السنتر</b><span data-en="Hands out orders and follows what is ready.">يوزّع الطلبات ويتابع الجاهز.</span></div>
+        <div class="app"><i class="free" data-en="Free">مجاناً</i><b data-en="Driver">السائق</b><span data-en="Orders and addresses on his phone.">الطلبات والعناوين على هاتفه.</span></div>
+        <div class="app"><i class="free" data-en="Free">مجاناً</i><b data-en="Live map">الخريطة</b><span data-en="Where every driver is, right now.">مكان كل سائق مباشرةً.</span></div>
+        <div class="app"><i class="free" data-en="Free">مجاناً</i><b data-en="Chef">الشيف</b><span data-en="Prep and stock counts from the kitchen.">التحضير والجرد من المطبخ.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="owner">
+    <div class="toasts" aria-hidden="true"><div class="toast"><b>📈</b><span data-en="Today's sales: 2,450,000 IQD">مبيعات اليوم: 2,450,000 د.ع</span></div><div class="toast"><b>👤</b><span data-en="Atheer clocked in at 08:57">أثير حضر 08:57</span></div><div class="toast"><b>⚠️</b><span data-en="Alert: an unusual discount">تنبيه: خصم غير معتاد</span></div></div>
+    <div class="text panel reveal">
+      <span class="kicker" data-en="Owner">صاحب المطعم</span>
+      <h2 data-en='Full oversight of your restaurant, <span class="glow">from anywhere</span>'>متابعة شاملة لمطعمك، <span class="glow">من أي مكان</span></h2>
+      <ul class="ticks">
+        <li data-en="Sales today, this week and this month, and the expected net profit.">مبيعات اليوم والأسبوع والشهر، وصافي الربح المتوقع.</li>
+        <li data-en="Which staff came in and who was late, by fingerprint.">من حضر من الموظفين ومن تأخّر، بالبصمة.</li>
+        <li data-en="Every void, discount and free meal: who did it, and on which bill.">كل إلغاء وخصم وضيافة: من فعلها، وعلى أي فاتورة.</li>
+        <li data-en="The value of your stock, and what to buy tomorrow at what cost.">قيمة المخزن، وما يجب شراؤه غداً وكم سيكلّف.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="head reveal">
+      <span class="kicker" data-en="Features">أهم الميزات</span>
+      <h2 data-en='Everything your restaurant needs, <span class="glow">in one system</span>'>كل ما يحتاجه مطعمك، <span class="glow">في نظام واحد</span></h2>
+    </div>
+    <div class="fgroup reveal"><h3 class="fhead" data-en="Sales and orders">البيع والطلبات</h3></div>
+    <div class="feats">
+      <article class="feat reveal"><figure class="wide"><img src="f-call.webp" srcset="f-call-m.webp 600w, f-call.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">01</span><h3 data-en="Calls inside the till">المكالمات داخل الكاشير</h3><p data-en="Phone and WhatsApp calls ring on the till screen with the caller’s name and last order before you answer; missed calls are never lost.">مكالمات الشريحة والواتساب تظهر على شاشة الكاشير مع اسم الزبون وآخر طلب له قبل الرد، والفائتة لا تضيع.</p></div></article>
+      <article class="feat reveal"><figure class="tall"><img src="f-wa.webp" srcset="f-wa-m.webp 600w, f-wa.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">02</span><h3 data-en="WhatsApp inside the system">الواتساب داخل البرنامج</h3><p data-en="The customer’s number and location go into the order in one press, with ready messages for “ready” and “on the way”.">رقم الزبون وموقعه ينتقلان إلى الطلب بضغطة، ورسائل «طلبك جاهز» و«في الطريق» جاهزة.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-cashier.webp" srcset="f-cashier-m.webp 600w, f-cashier.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">03</span><h3 data-en="Dine-in, takeaway, delivery">صالة وسفري وتوصيل</h3><p data-en="One screen for every kind of order, with dish pictures; each order reaches the kitchen the moment it is sent.">شاشة واحدة لكل أنواع الطلبات، بصور الأصناف، والطلب يصل إلى المطبخ لحظة إرساله.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-pay.webp" srcset="f-pay-m.webp 600w, f-pay.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">04</span><h3 data-en="Pay in dinars or dollars">الدفع بالدينار والدولار</h3><p data-en="Takes dollars at your rate and gives change in dinars, with split and mixed payments.">يقبل الدولار بسعر صرفك ويعيد الباقي بالدينار، مع الدفع المختلط والتقسيم على عدد.</p></div></article>
+    </div>
+    <div class="fgroup reveal"><h3 class="fhead" data-en="Kitchen and delivery">المطبخ والتوصيل</h3></div>
+    <div class="feats">
+      <article class="feat reveal"><figure class="wide"><img src="f-kitchen.webp" srcset="f-kitchen-m.webp 600w, f-kitchen.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">05</span><h3 data-en="Kitchen display">شاشة المطبخ</h3><p data-en="Each station sees only its own dishes, a totals bar shows how many of each to cook, and late orders turn red.">كل قسم يرى أصنافه فقط، وشريط المجاميع يبيّن كم يجهّز الطبّاخ من كل صنف، والمتأخر بالأحمر.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-printers.webp" srcset="f-printers-m.webp 600w, f-printers.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">06</span><h3 data-en="Backup printer">الطابعة البديلة</h3><p data-en="Every station has its printer; if one stops, its tickets move to the backup by themselves.">لكل قسم طابعته، وإذا توقفت طابعة يتحوّل الطلب وحده إلى البديلة ولا يضيع.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-map.webp" srcset="f-map-m.webp 600w, f-map.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">07</span><h3 data-en="Live delivery map">خريطة الدلفرية المباشرة</h3><p data-en="Every driver on the map in real time, the nearest and free ones first.">كل سائق على الخريطة لحظة بلحظة، والأقرب والفاضي يظهر أولاً.</p></div></article>
+      <article class="feat reveal"><figure class="tall"><img src="f-driver.webp" srcset="f-driver-m.webp 600w, f-driver.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">08</span><h3 data-en="Driver app">تطبيق السائق</h3><p data-en="With his own code: orders, addresses, call, map and delivered buttons, and his account worked out.">برمزه الشخصي: الطلبات والعناوين وأزرار اتصل والخريطة وسلّمت، وحسابه محسوب.</p></div></article>
+      <article class="feat reveal"><figure class="tall"><img src="f-centre.webp" srcset="f-centre-m.webp 600w, f-centre.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">09</span><h3 data-en="Dispatch desk and trips">السنتر والرحلات</h3><p data-en="Hands ready orders to drivers as trips, with “hand over all ready” in one press.">يوزّع الجاهز على السائقين برحلات، و«تسليم كل الجاهز» بضغطة واحدة.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-display.webp" srcset="f-display-m.webp 600w, f-display.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">10</span><h3 data-en="Pickup display">شاشة الصالة</h3><p data-en="Ready numbers shown to customers, each called aloud.">أرقام الطلبات الجاهزة أمام الزبائن، مع نداء صوتي لكل رقم.</p></div></article>
+    </div>
+    <div class="fgroup reveal"><h3 class="fhead" data-en="Stock and costs">المخزن والتكاليف</h3></div>
+    <div class="feats">
+      <article class="feat reveal"><figure class="wide"><img src="f-costs.webp" srcset="f-costs-m.webp 600w, f-costs.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">11</span><h3 data-en="Profit on every dish">ربح كل وجبة</h3><p data-en="Each dish’s cost from its ingredients and its real profit after expenses, with a suggested price.">كلفة كل وجبة من مكوّناتها وربحها الحقيقي بعد المصاريف، مع السعر المقترح.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-order.webp" srcset="f-order-m.webp 600w, f-order.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">12</span><h3 data-en="Purchase orders that write themselves">أمر الشراء يُكتب وحده</h3><p data-en="When an ingredient runs low, an order is written for each supplier with its quantity and expected cost.">حين تنزل مادة عن حدّها يُكتب أمر شراء لكل مورد بكميته وكلفته المتوقعة.</p></div></article>
+      <article class="feat reveal"><figure class="tall"><img src="f-prep.webp" srcset="f-prep-m.webp 600w, f-prep.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">13</span><h3 data-en="Chef’s page">صفحة الشيف</h3><p data-en="The chef preps and draws stock from his phone without seeing any amounts; nothing leaves without a reason.">الشيف يحضّر ويسحب من المخزن من هاتفه بلا أي مبالغ، ولا سحب بلا سبب.</p></div></article>
+      <article class="feat reveal"><figure class="tall"><img src="f-count.webp" srcset="f-count-m.webp 600w, f-count.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">14</span><h3 data-en="Blind stock count">الجرد الأعمى</h3><p data-en="The chef counts without seeing the expected amount; the gap is shown in dinars before the shift closes.">الشيف يعدّ دون أن يرى الكمية المتوقعة، والفرق بالدينار قبل قفل الوردية.</p></div></article>
+    </div>
+    <div class="fgroup reveal"><h3 class="fhead" data-en="Staff and oversight">الموظفون والرقابة</h3></div>
+    <div class="feats">
+      <article class="feat wide-card reveal"><figure class="pair"><img src="clock-device.webp" srcset="clock-device-m.webp 600w, clock-device.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"><i class="link"></i><img class="screen" src="f-clock.webp" srcset="f-clock-m.webp 600w, f-clock.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">15</span><h3 data-en="Fingerprint clock link">ربط جهاز البصمة</h3><p data-en="The fingerprint clock sends arrivals and departures to the system by itself, with no manual entry.">جهاز البصمة يرسل الحضور والانصراف إلى البرنامج وحده، دون أي إدخال يدوي.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-payroll.webp" srcset="f-payroll-m.webp 600w, f-payroll.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">16</span><h3 data-en="Payroll worked out automatically">الرواتب تُحسب تلقائياً</h3><p data-en="Absence, lateness, overtime and advances reach each salary; the sheet is ready to pay and print.">الغياب والتأخير والإضافي والسلف تُحسب على الراتب، وكشف جاهز للدفع والطباعة.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-insight.webp" srcset="f-insight-m.webp 600w, f-insight.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">17</span><h3 data-en="Constant oversight">رقابة لا تنام</h3><p data-en="Every void, discount, free meal and drawer opening is recorded by name; unusual behaviour shows in red.">كل إلغاء وخصم وضيافة وفتح درج مسجّل باسم من فعله، والتصرف غير المعتاد يظهر بالأحمر.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-perms.webp" srcset="f-perms-m.webp 600w, f-perms.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">18</span><h3 data-en="Three-level permissions">صلاحيات بثلاث درجات</h3><p data-en="Each permission is allowed, needs approval, or is refused, with ready templates for every role.">لكل صلاحية: مسموح، أو بموافقة، أو ممنوع، مع قوالب جاهزة لكل وظيفة.</p></div></article>
+    </div>
+    <div class="fgroup reveal"><h3 class="fhead" data-en="For the owner">صاحب المطعم</h3></div>
+    <div class="feats">
+      <article class="feat reveal"><figure class="tall"><img src="f-owner.webp" srcset="f-owner-m.webp 600w, f-owner.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">19</span><h3 data-en="Owner app">تطبيق صاحب المطعم</h3><p data-en="From outside the restaurant: sales, orders, cash, attendance, stock and net profit, encrypted for him alone.">من خارج المطعم يرى المبيعات والطلبات والصندوق والحضور والمخزن وصافي الربح، مشفّراً لا يقرؤه غيره.</p></div></article>
+      <article class="feat reveal"><figure class="tall"><img src="f-summary.webp" srcset="f-summary-m.webp 600w, f-summary.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">20</span><h3 data-en="Daily summary on WhatsApp">ملخص اليوم على واتسابك</h3><p data-en="At every shift you receive its summary: sales, payments, discounts, profit and anything worth a look.">عند كل وردية يصلك ملخصها: المبيعات والدفع والخصومات والربح وما يستحق المراجعة.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-startcheck.webp" srcset="f-startcheck-m.webp 600w, f-startcheck.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">21</span><h3 data-en="Device check at start">فحص الأجهزة عند التشغيل</h3><p data-en="Checks every printer, screen and phone, and tells you the fault and its fix before the rush.">يفحص كل طابعة وشاشة وهاتف ويخبرك بالعطل وطريقة إصلاحه قبل الزحمة.</p></div></article>
+      <article class="feat reveal"><figure class="wide"><img src="f-backup.webp" srcset="f-backup-m.webp 600w, f-backup.webp 1200w" sizes="(max-width: 820px) 90vw, 560px" alt="" loading="lazy" decoding="async"></figure><div><span class="n">22</span><h3 data-en="Works without internet">يعمل بلا إنترنت</h3><p data-en="Runs on the restaurant’s own network; your data stays with you, backed up every hour.">يعمل على شبكة المطعم الداخلية، وبياناتك عندك مع نسخ احتياطي كل ساعة.</p></div></article>
+    </div>
+  </section>
+
+
+  <section id="start">
+    <div class="head2 reveal">
+      <span class="kicker" data-en="Getting started">كيف نبدأ</span>
+      <h2 data-en='Three steps, <span class="glow">and you are ready</span>'>ثلاث خطوات، <span class="glow">وتبدأ العمل</span></h2>
+    </div>
+    <div class="steps">
+      <article class="step glass reveal"><b>1</b><h3 data-en="Contact us">تواصل معنا</h3><p data-en="Tell us about your restaurant: its sections, its devices, and whether you deliver.">أخبرنا عن مطعمك: أقسامه، وأجهزته، وهل لديك توصيل.</p></article>
+      <article class="step glass reveal"><b>2</b><h3 data-en="Installation and setup">التنصيب والربط</h3><p data-en="We install the system, connect the computers, printers, screens and fingerprint clock, and enter your menu.">ننصّب البرنامج، ونربط الحاسبات والطابعات والشاشات وجهاز البصمة، وندخل أصنافك.</p></article>
+      <article class="step glass reveal"><b>3</b><h3 data-en="Training and follow-up">التدريب والمتابعة</h3><p data-en="We train your staff on the spot and stay with you after the start.">ندرّب موظفيك في المكان، ونبقى معك بعد بدء العمل.</p></article>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="head2 reveal">
+      <span class="kicker" data-en="Questions">أسئلة شائعة</span>
+      <h2 data-en='What restaurant owners <span class="glow">ask us</span>'>ما يسألنا عنه <span class="glow">أصحاب المطاعم</span></h2>
+    </div>
+    <div class="faq">
+      <details class="glass reveal"><summary data-en="Does it work without internet?">هل يعمل البرنامج من دون إنترنت؟</summary><p data-en="Yes. It runs on the restaurant’s own network, so selling never stops when the internet drops. Internet is needed only for WhatsApp, the delivery map and the owner app.">نعم. يعمل على الشبكة الداخلية للمطعم، فلا يتوقف البيع إذا انقطع الإنترنت. يلزم الإنترنت فقط للواتساب وخريطة الدلفرية وتطبيق صاحب المطعم.</p></details>
+      <details class="glass reveal"><summary data-en="What happens to my data if the computer fails?">ماذا يحدث لبياناتي إذا تعطّلت الحاسبة؟</summary><p data-en="A backup is kept every hour and every day on an external drive, and restored in one press on a new computer.">تُحفظ نسخة احتياطية كل ساعة وكل يوم على ذاكرة خارجية أو قرص آخر، وتُستعاد بضغطة واحدة على حاسبة جديدة.</p></details>
+      <details class="glass reveal"><summary data-en="Can I use my current printers?">هل أستطيع استخدام طابعاتي الحالية؟</summary><p data-en="Yes. Common thermal printers work over USB or the network, and we help you connect them and assign one to each station.">نعم، تعمل الطابعات الحرارية المعروفة عبر USB أو الشبكة، ونساعدك في ربطها وتحديد طابعة لكل قسم.</p></details>
+      <details class="glass reveal"><summary data-en="How long does installation take?">كم يستغرق التنصيب؟</summary><p data-en="Usually one working day: installing the system, connecting devices and printers, entering the menu and training the staff.">عادةً يوم عمل واحد: تنصيب البرنامج، وربط الأجهزة والطابعات، وإدخال الأصناف، وتدريب الموظفين.</p></details>
+      <details class="glass reveal"><summary data-en="Is there a monthly fee?">هل يوجد اشتراك شهري؟</summary><p data-en="There is no monthly fee for the system, nor for the dispatch, driver, map and chef apps.">لا اشتراك شهري على البرنامج ولا على تطبيقات السنتر والسائق والخريطة والشيف.</p></details>
+      <details class="glass reveal"><summary data-en="Is there support after the sale?">هل يوجد دعم بعد البيع؟</summary><p data-en="Yes. We follow up after installation, answer your questions on WhatsApp, and come to you when needed.">نعم، نتابع معك بعد التنصيب، ونجيب عن أسئلتك على الواتساب، ونصل إليك عند الحاجة.</p></details>
+    </div>
+    <div class="support glass reveal"><b>🛟</b><p data-en="Support and training are part of the system: we stay with you after installation and answer you whenever you need us.">الدعم والتدريب جزء من النظام: نبقى معك بعد التنصيب، ونجيبك متى احتجت إلينا.</p></div>
+  </section>
+
+  <section id="contact">
+    <div class="text panel reveal">
+      <span class="kicker" data-en="Contact">تواصل</span>
+      <h2 data-en='We are <span class="glow">one message away</span>'>نحن على بُعد <span class="glow">رسالة واحدة</span></h2>
+      <div class="phone-num">0777 624 6306</div>
+      <div class="row">
+        <a class="btn wa" data-wa href="#"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.4-5.1-4.6-.2-.2-1.2-1.6-1.2-3.1s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.2.6.4.1.1.1.8-.1 1.5z"/></svg><span data-en="Contact us">تواصل معنا</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><span data-en="© Aivoro · Restaurant management system · aivoropos.com">© آيفورو · نظام إدارة المطاعم · aivoropos.com</span><br><small data-en="Imagery: Sentinel-2 cloudless by EOX (contains modified Copernicus Sentinel data 2016) · Night lights: NASA Earth Observatory">صور الأقمار الصناعية: Sentinel-2 cloudless من EOX (تتضمن بيانات Copernicus Sentinel معدّلة 2016) · أضواء الليل: NASA</small></footer>
+
+<a class="float-wa" data-wa href="#" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.4-5.1-4.6-.2-.2-1.2-1.6-1.2-3.1s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.2.6.4.1.1.1.8-.1 1.5z"/></svg></a>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+</script>
+<script>
+  // Two languages in the page itself: each element keeps its Arabic, carries its English in data-en, and swaps.
+  const texts = [...document.querySelectorAll('[data-en]')].map((el) => [el, el.innerHTML, el.dataset.en])
+  const WA = { ar: 'السلام عليكم، أريد الاستفسار عن برنامج آيفورو.', en: 'Hello, I would like to ask about Aivoro.' }
+  function speak(lang) {
+    document.documentElement.lang = lang
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+    for (const [el, ar, en] of texts) el.innerHTML = lang === 'ar' ? ar : en
+    document.title = lang === 'ar' ? 'آيفورو · نظام إدارة المطاعم' : 'Aivoro · Restaurant management system'
+    const button = document.getElementById('lang')
+    button.textContent = lang === 'ar' ? 'EN' : 'ع'
+    button.setAttribute('aria-label', lang === 'ar' ? 'English' : 'العربية')
+    document.querySelectorAll('[data-wa]').forEach((a) => { a.href = 'https://wa.me/9647776246306?text=' + encodeURIComponent(WA[lang]); a.target = '_blank'; a.rel = 'noopener' })
+    try { localStorage.setItem('aivoro-lang', lang) } catch {}
+    window.dispatchEvent(new Event('langchange'))
+  }
+  let saved = 'ar'
+  try { saved = localStorage.getItem('aivoro-lang') || 'ar' } catch {}
+  speak(saved)
+  document.getElementById('lang').onclick = () => speak(document.documentElement.lang === 'ar' ? 'en' : 'ar')
+  // Words rise in as they come into view; the menu marks the part being read.
+  const seen = new IntersectionObserver((list) => list.forEach((e) => e.isIntersecting && (e.target.classList.add('in'), seen.unobserve(e.target))), { threshold: .12 })
+  document.querySelectorAll('.reveal').forEach((el) => seen.observe(el))
+  const marks = new IntersectionObserver((list) => list.forEach((e) => e.isIntersecting && document.querySelectorAll('.links a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id))), { threshold: .4 })
+  document.querySelectorAll('main section').forEach((s) => marks.observe(s))
+</script>
+<script type="module" src="scene.js"></script>
+</body>
+</html>
