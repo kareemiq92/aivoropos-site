@@ -305,7 +305,7 @@ Disable unused default features on `tauri` and every plugin. Use Tauri ≥ 2.4 u
 
 ```
 ┌──────────────────────── UI (Svelte 5 in WebView2) ─────────────────────────┐
-│ AppShell: title bar search · tabs · command palette · status chips         │
+│ AppShell: top-centered nav bar · Universal Search (hero) · tabs · chips    │
 │ Screens (per module) · DataGrid · DocumentEditor · TemplateDesigner        │
 │ Help layer: ScreenBanner · TaskHint · EmptyState · Checklist · Driver.js   │
 └──────────────── invoke(command, dto) ▲ listen(event) ──────────────────────┘
@@ -1885,7 +1885,7 @@ Every `condition` used by a `setup_warning` or conditional hint MUST be register
 2. Every action has a keyboard path; shortcuts are shown in menus, tooltips and the command palette.
 3. Line grids: arrows move between cells **visually** (in RTL, ← goes to the cell on the screen's left), Tab/Shift+Tab follow logical order, Enter moves next (or down per setting), multi-row paste from Excel works everywhere a grid exists. Acceptance test in LTR and RTL.
 4. Create masters inline (Alt+C or "+ Create …" in pickers) without leaving the document.
-5. Command palette: Ctrl+K and Ctrl+Shift+P (Ctrl+K inside rich text inserts a link instead), plus a visible search box in the title bar.
+5. Universal Search (§19A) is the primary way to go anywhere: Ctrl+K, Ctrl+Shift+P, `/` outside inputs, or the prominent search button in the top bar (Ctrl+K inside rich text inserts a link instead). It finds sections, actions, records, settings and help, not only data.
 6. One save model per form: drafts autosave (3–5 s and on blur) with visible status; financial documents need explicit Issue/Post.
 7. Undo instead of "Are you sure?" for reversible actions (toast 8–10 s); confirmation dialogs only for irreversible actions (issue, close period, delete company); bulk destructive actions require typing the name. Issue (F10, Ctrl+Shift+F10 or the button) always confirms: "Issue this invoice? Its number becomes final." — Enter = Issue, Esc = back.
 8. Issued documents: void or credit note with mandatory reason; never delete.
@@ -1912,6 +1912,64 @@ Every `condition` used by a `setup_warning` or conditional hint MUST be register
 29. Owner-only information (cost, margin, other users' activity) never leaks into prints, exports to customers, non-owner roles — or the Excel mirror, which bypasses roles (§12.1, §21.1).
 30. Every screen ships with a row in the screen registry (Appendix H): banner copy and a complete `features` list (ar/en), empty state, F1 page, `task_ids` with start and completion emitters, keyboard paths tested, RTL screenshot reviewed. Dialogs and wizards ship with a one-line subtitle. CI enforces the registry.
 31. Shortcuts bind by physical key (`KeyboardEvent.code`) and work under Arabic and Kurdish keyboard layouts.
+
+---
+
+## 19A. App shell layout & Universal Search (founder decision, MUST)
+
+### 19A.1 Top-centered navigation (no sidebar by default)
+- One top bar, height 52 px (44 px in Compact density). Layout, mirrored automatically in RTL via logical properties:
+  `[logo + company name]  ·  [centered pill-shaped segmented nav: Home | Invoices | Customers | Suppliers | Materials | Costing | Reports | More ▾]  ·  [🔍 Search Ctrl+K]  [🔔]  [⚙️]  [👤]`
+- Max 7 primary sections + "More ▾"; everything else is reached via Universal Search. Edition/module flags hide sections that are off.
+- Active section: filled soft-accent pill + accessible `aria-current="page"`. Sections with sub-areas open a dropdown on click and show secondary tabs under the bar inside the section (e.g. Invoices: Quotations · Orders · Delivery notes · Invoices · Credit notes · Receipts).
+- Responsive: below 1280 px width labels collapse to icons with tooltips; below 1024 px "More ▾" absorbs the trailing sections.
+- Settings option `nav_position: top | side` (default `top`) for users who prefer a sidebar; both render from the same section registry.
+- Rationale: business screens are wide grids; a top bar costs ~52 px of height instead of ~220 px (≈16 %) of width on a 1366×768 laptop, and a centered bar needs no left/right flip between Arabic and English.
+
+### 19A.2 Use the full screen
+- **Focus Mode** (F11 or ⛶ button): hides the top bar; it slides back when the pointer touches the top edge or on Alt. Remembered per screen type (e.g. Invoice editor, BoQ).
+- Top bar shrinks to 40 px while scrolling down long grids, restores on scroll up.
+- Detail/preview panels are slide-over drawers (close with Esc), never permanent columns.
+- Grids show extra columns (margin, stock left) automatically on wide screens and hide secondary columns on narrow ones; Compact density setting.
+- Any document can be popped out to its own OS window (multi-monitor), e.g. invoice on one screen, customer statement on the other.
+
+### 19A.3 Universal Search: make it the hero element
+Visual prominence (MUST):
+- The search button is the most visible control in the top bar: wider than any nav item (min 220 px on ≥1280 px screens), rounded, filled with the accent-tinted surface, magnifier icon, placeholder "Search anything…" / "ابحث عن أي شي…", and a `Ctrl K` keycap chip. On narrow widths it collapses to a round accent icon button, never hidden.
+- Home screen additionally shows a large centered search field ("What do you want to do?") above the KPIs.
+- First-run hint (§18) points at it: "Type anything — a section, a customer, or an action like ‘new invoice’."
+- Opening: Ctrl+K, Ctrl+Shift+P, `/` when focus is not in an input, or click. Opens a centered overlay (Spotlight-style, 640 px wide, max 60 % viewport height) with backdrop dim, 120 ms fade/scale animation (respects reduced-motion). Esc closes and restores focus.
+
+What it searches (grouped results, in this order, max 5 per group with "Show all"):
+1. **Sections & screens** (from the Appendix H screen registry): typing `suppliers`, `موردين`, `الموردون`, `مجهز` → Suppliers screen.
+2. **Actions/commands** (from the shortcut/command registry): `new invoice`, `فاتورة جديدة`, `record payment`, `قبض` → runs the action; shortcut shown at the right.
+3. **Records**: customers, suppliers, items, documents by number/name/phone/tax ID, projects, letters. Each result shows a secondary line (balance, status, date).
+4. **Settings** (every setting has a registry entry with keywords): `tax`, `ضريبة`, `dark mode`, `الوضع الليلي`.
+5. **Help**: hint/banner/F1 topics; `how to return an invoice` → explains credit note + button "Create credit note".
+
+Parameterized commands: `invoice Ahmed` / `فاتورة أحمد` → new invoice with customer preselected; `statement Ahmed` / `كشف أحمد` → opens that customer's statement; `item 12mm` → item card. Selecting a record and pressing Tab opens its action menu (New invoice, Statement, Call/WhatsApp, Edit).
+
+Matching rules (MUST, implemented in Rust, shared normalizer for index and query):
+- Arabic normalization: strip tashkeel and tatweel; أ إ آ ٱ → ا; ة → ه; ى → ي; ؤ → و; ئ → ي; Arabic-Indic and Persian digits → ASCII; case-fold Latin.
+- Synonym dictionary `src/search/synonyms.{ar,en}.json` per section/action/setting (e.g. Suppliers: مورد، موردين، الموردون، مجهز، مجهزين، بائع، vendor, supplier). Mixed-language queries allowed.
+- Typo tolerance: prefix match + trigram/Damerau-Levenshtein ≤ 1 for tokens ≥ 4 chars (`فاتوره`, `فتورة` → فاتورة).
+- Ranking = text score × type weight + recency/frequency boost (per-user `search_usage(target_id, count, last_used_at)` in app.db) + exact-prefix bonus. Owner-only data and records the user lacks permission for are never returned.
+- Empty query shows: Recent (last 8 opened), Pinned/Favorites, and the 5 most-used actions.
+
+Implementation & performance budgets:
+- Records indexed with SQLite FTS5 (`unicode61 remove_diacritics 2` + the normalizer applied before indexing) in the company DB; sections/actions/settings/help indexed in memory from the registries at startup.
+- Index updates in the same transaction as the record change.
+- Budgets: overlay visible ≤ 50 ms after shortcut; results ≤ 50 ms p95 per keystroke with the `large` fixture (100k documents, 20k customers); no network ever.
+- Fully keyboard-driven: ↑/↓ move, Enter open, Ctrl+Enter open in new tab, Tab action menu, Alt+1..5 jump to group. Screen-reader: combobox + listbox roles, result count announced.
+
+### 19A.4 Acceptance criteria
+1. Top bar renders centered nav in both AR (RTL) and EN (LTR) with no layout flip of the nav order logic; active state visible; works at 1024, 1366, 1920 px widths.
+2. Search button is visibly the most prominent top-bar control (design review checklist) and is never hidden at any width.
+3. Typing `الموردون`, `موردين`, `مجهز`, `supplier` each returns the Suppliers screen as the first result.
+4. `فاتوره جديده` (ه instead of ة, typo-normalized) runs New invoice; `كشف أحمد` opens Ahmed's statement.
+5. `ضريبه` returns the Tax settings entry; `how to return an invoice` returns the credit-note help item with its action button.
+6. p95 per-keystroke latency ≤ 50 ms on the `large` fixture on the reference 4 GB Windows 10 machine.
+7. Focus Mode hides the bar and restores it; setting `nav_position: side` switches to a sidebar without restart.
 
 ---
 
@@ -2199,8 +2257,8 @@ BUILD:
 1. app.db (profiles, user_ui_prefs incl. task_reminder_mode and theme columns, hint_state, recent_companies,
    series_hwm) and machine.db (license, shared_companies, printer_calibrations) per §9.1 + migrations.
 2. AppShell: single main window, in-app tabs (open/close/reorder, restore on restart, cap ≈ 12, unmount after
-   5 min), WebView2 runtime settings (§6), title-bar search box, command palette (Ctrl+K, Ctrl+Shift+P) listing
-   registered actions with shortcuts, global shortcut registry bound by KeyboardEvent.code (Appendix A),
+   5 min), WebView2 runtime settings (§6), top-centered navigation bar and the prominent Universal Search button + overlay per §19A (sections, actions,
+   settings and help indexed from day one; records added as modules land), Focus Mode, global shortcut registry bound by KeyboardEvent.code (Appendix A),
    status-chip area, Settings screen skeleton.
 3. i18n: ar (Modern Standard Arabic) / en catalogs + optional overlay loader (ar-IQ); the in-house ICU-lite
    formatter (§3.6) with Intl.PluralRules/NumberFormat/DateTimeFormat; dir switching; CSS logical properties
