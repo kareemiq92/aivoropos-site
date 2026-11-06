@@ -1,0 +1,261 @@
+=====================================================================
+  تقرير بحث السوق: مشاكل المستخدمين مع إكسل وبرامج إدارة الأعمال
+  مشروع: نظام إدارة أعمال Offline (كلفة، مبيعات، عملاء، مواد، مقارنات)
+  التاريخ: 2026-11-06
+=====================================================================
+
+ملاحظة عن مصداقية المصادر
+---------------------------------------------------------------------
+- أقوى الأدلة: منتديات الشركات الرسمية (Shopify, Etsy, Xero Ideas,
+  QuickBooks Community) وتقييمات المستخدمين (Capterra, Software Advice,
+  G2, Trustpilot)، واستبيان DOSS.
+- محركات البحث المتاحة ما رجّعت نقاشات Reddit و Hacker News مباشرة.
+- كثير من المقالات من شركات تبيع برامج، فهي متحيزة ضد إكسل.
+- ينصح بقراءة يدوية لـ r/smallbusiness و r/QuickBooks و r/excel
+  وتقييمات النجمة والنجمتين على Capterra قبل البناء.
+
+
+=====================================================================
+  الجزء 1: شكاوي المستخدمين من إكسل
+=====================================================================
+
+1. أخطاء يومية (استبيان DOSS):
+   - 59% أكثر خطأ عندهم هو الإدخال اليدوي
+   - 46% أخطاء بالمعادلات
+   - 22% يواجهون أخطاء كل يوم
+   - 3.6 ساعة أسبوعياً تضيع على تصليح الأخطاء
+
+2. فوضى النسخ: ملفات مثل Budget_v2_FINAL_Revised، وما تعرف ياهي الأخيرة.
+
+3. المخزون بالشيت ما يطابق المخزون الحقيقي (إدخال يدوي، مو لحظي).
+
+4. الكلفة تصير قديمة: سعر المادة مكتوب يدوياً، فإذا المورد غيّر
+   سعره، كلفة المنتج تبقى غلط وتبيع بخسارة بدون ما تدري.
+
+5. الملف يكبر ويصير صعب التنقل، والتقارير والمقارنات تحتاج شغل يدوي.
+
+6. لا يوجد حفظ تلقائي أو سجل نسخ قوي، والملفات الكبيرة تتلف.
+
+7. منتدى Etsy: خياطة تتابع كلفة القماش والإكسسوارات لكل قطعة بإكسل
+   وتسميه "متعب"، والبرامج المجانية بيها خانة كلفة وحدة بس.
+
+ملاحظة: إكسل يكفي للشغل الصغير. العميل المستهدف هو اللي كبر شغله
+وبدأ إكسل يغرقه. "نقطة الانكسار" الأشهر: الحاجة للمخزون والمشتريات
+بمكان واحد.
+
+
+=====================================================================
+  الجزء 2: شكاوي المستخدمين من البرامج العالمية
+=====================================================================
+
+[QuickBooks]
+- تقييم Trustpilot حوالي 1.1 من 5 (حسب مصادر ثالثة).
+- Desktop تحوّل لاشتراك سنوي، وزيادات 40-60%، وتجديد من 599 إلى 999$.
+- "ما في أي قيمة مضافة تبرر الزيادة"، وإجبار على الانتقال للسحابة.
+- "وحدة المخزون محدودة، ما تتبع الأسعار والكلف حسب الكمية والوحدات."
+- مصنّع: "عدد المخزون دايماً غلط."
+- المخزون فقط بالباقات الغالية (Plus وفوق).
+- نسخة التصنيع بـ 399$ (منتدى Etsy).
+
+[inFlow Inventory]
+- وقف النسخة المحلية فعلياً. مستخدم: "استخدمت النسخة المحلية 14 سنة
+  وما كنت ناوي أتحول للسحابة، بس ما كان عندي خيار."
+- "سياسة شركتنا تفرض إن البيانات تبقى تحت سيطرتنا."
+- تأخر التزامن، والسعر يبدأ تقريباً من 89-110$ شهرياً.
+
+[Zoho Inventory]
+- تقييمه عموماً جيد (4.4-4.5).
+- التزامن مع Shopify يخرب، والدعم يرد بعد أيام.
+- الإعداد مربك، والربط بس بالباقات الأعلى.
+
+[Xero] (من منتدى أفكار Xero الرسمي)
+- لا يدعم التجميع (Assemblies) ولا قوائم المواد (BOM).
+- لا يدعم الباقات (Bundles) وإدارة Xero: "ما عندنا خطط حالياً".
+- حد أقصى 4000 مادة، ولا يسمح بالبيع لما المخزون صفر.
+- لا يدعم تتبع الدفعات وتاريخ الانتهاء.
+
+[Shopify] (من منتدى Shopify الرسمي)
+- يحفظ سعر كلفة واحد لكل منتج، وما يتحدث عند استلام بضاعة بسعر جديد.
+- لا مكان للشحن والجمارك (Landed Cost).
+- "كل تقرير ربح غلط، والغلط دايماً بالاتجاه اللي يفرّحك."
+- "البرامج تشتغل زين بعملة وحدة، وتنهار مع أسعار الصرف."
+- "تأكد إن البرنامج يحفظ الكلفة بتاريخ الطلب، أغلبهم ما يسوونها."
+
+[Odoo]
+- التطبيق لشركة صغيرة يكلف 8,000-25,000$ ويحتاج 2-6 أشهر.
+- طريقة حساب الكلفة والوحدات صعبة أو مستحيلة التغيير بعد البدء.
+
+[Katana / Cin7 / Craftybase]
+- Katana: صعب التعلم، أخطاء، 99-359$ شهرياً.
+- Cin7: يبدأ من 349$ شهرياً، والإعداد ياخذ أسابيع.
+- Craftybase: رخيص بس ما يناسب التوسع ولا يدعم الباركود.
+
+[MarketMan - مطاعم]
+- رسوم إعداد 500$، والإعداد الأولي طويل مع وصفات ومواد كثيرة.
+
+[Sortly / Acctivate / Inventory Planner]
+- السعر يرتفع بسرعة مع كبر المخزون.
+- التقارير والقوالب ما تنعدل.
+- بعضهم يصدّر CSV يدوياً كل يوم لأن الربط ناقص.
+
+[عام]
+- التسعير لكل مستخدم: 50-250$ شهرياً للشركات الصغيرة.
+- "البسيط ناقص (بدون كلفة ومشتريات)، والكامل معقد وغالي."
+- شركة صغيرة بمنتدى AnandTech: "ما لكينا برنامج يناسبنا، فسوّينا
+  برنامجنا بـ Access."
+
+
+=====================================================================
+  الجزء 3: شنو يريدون بشدة
+=====================================================================
+
+1. ادفع مرة وحدة، وبياناتي عندي (Offline).
+2. المخزون والمشتريات والمبيعات بمكان واحد.
+3. كلفة دقيقة تتحدث لحظياً لما سعر المادة يتغير.
+4. كلفة محفوظة بتاريخ كل عملية، مع الشحن والجمارك.
+5. دعم عملات متعددة وسعر صرف.
+6. وصفات وقوائم مواد وباقات.
+7. تحويل وحدات (شراء بالكارتون، بيع بالقطعة).
+8. نقل البيانات من إكسل بسهولة.
+9. سعر ثابت، مو لكل مستخدم.
+10. تقارير وقوالب قابلة للتعديل.
+11. بسيط ويشتغل بسرعة، بدون أسابيع إعداد.
+
+
+=====================================================================
+  الجزء 4: قائمة الميزات المقترحة (مرتبة حسب قوة الطلب)
+=====================================================================
+
+ #  | الميزة                                   | المشكلة اللي تحلها
+----+------------------------------------------+---------------------------
+ 1  | كلفة مؤرخة بالدفعات + شحن وجمارك         | الربح الوهمي
+ 2  | وصفات وقوائم مواد (BOM)                  | نقص Xero و QuickBooks
+ 3  | تحويل الوحدات (كارتون إلى قطعة)          | فرق الجرد
+ 4  | عملات متعددة وسعر صرف بالتاريخ           | انهيار البرامج مع الصرف
+ 5  | استيراد ذكي من إكسل                       | طول الإعداد
+ 6  | أسعار مخصصة لزبون/مورد بتاريخ محدد       | مرونة التسعير
+ 7  | تنبيه انخفاض الربح عند تغير سعر مادة      | الكلفة القديمة بإكسل
+ 8  | إعدادات قابلة للتغيير لاحقاً              | مشكلة Odoo
+ 9  | دفع مرة وحدة + Offline                    | الاشتراكات والسحابة
+ 10 | باقات (Bundles)                           | طلب مفتوح بـ Xero
+ 11 | منع أخطاء الإدخال (إكمال تلقائي وتحقق)    | 59% أخطاء إدخال
+ 12 | سماح بالبيع بالسالب مع تنبيه              | توقف البيع بـ Xero
+ 13 | تقارير وقوالب فواتير قابلة للتعديل        | شكاوي Acctivate و Sortly
+ 14 | مزامنة اختيارية على الشبكة المحلية        | ضعف التعاون بالبرامج المحلية
+
+
+=====================================================================
+  الجزء 5: تصميم الأسعار المؤرخة والمخصصة
+=====================================================================
+
+الفكرة: كل مادة إلها "سجل أسعار"، وكل سعر عنده:
+  - ينطبق على: الكل / مورد معيّن / زبون معيّن
+  - من تاريخ، وإلى تاريخ (اختياري)
+
+مثال: حديد 12 ملم
+  700$  | الكل                    | من 2026-01-01
+  680$  | مورد: شركة النور         | من 2026-03-01
+  750$  | الكل                    | من 2026-09-15
+  720$  | زبون: مقاولات الرافدين   | 2026-09-15 إلى 2026-12-31
+
+قاعدة الاختيار:
+  1. سعر خاص بهذا الزبون/المورد وتاريخه ساري
+  2. وإلا السعر العام الساري بهذا التاريخ
+  3. إذا أكثر من سعر ساري، الأحدث تاريخاً يفوز
+
+نقاط مهمة:
+  - الفاتورة تحفظ نسخة من السعر وقت إصدارها.
+  - التاريخ ممكن يكون بالماضي، والبرنامج يسأل قبل إعادة حساب الفواتير.
+  - معاينة التأثير: "هذا التغيير يأثر على 14 منتج".
+  - فهرس SQLite على (المادة، الجهة، التاريخ) للسرعة.
+
+
+=====================================================================
+  الجزء 6: التوصيات
+=====================================================================
+
+الرسالة التسويقية:
+  "Know your real profit. Accurate costing, without the $300/month ERP."
+  "Inventory, costing & sales in one place. Pay once.
+   Your data never leaves your computer."
+
+الجمهور الأول: الأعمال الصغيرة اللي كبرت على إكسل، ومستخدمي
+QuickBooks Desktop و inFlow الزعلانين من الاشتراك والسحابة.
+
+التسعير المقترح (مرة وحدة):
+  - Starter (عملاء + مواد + مبيعات): ~49$
+  - Pro (+ الكلفة والمقارنات): ~99-129$
+  - تجربة مجانية 14 يوم
+  - تحديثات كبيرة مدفوعة بعد سنة
+
+ترتيب البناء:
+  1. المواد + العملاء (الأساس)
+  2. المبيعات
+  3. الكلفة (الميزة اللي تبيع)
+  4. المقارنات (تحتاج بيانات متراكمة)
+
+التقنية:
+  - Tauri أو Python + PySide6 (Windows و macOS)
+  - SQLite لقاعدة البيانات، وإكسل و PDF كمخرجات واستيراد
+  - تفعيل رخص Offline مربوط بالجهاز
+  - البيع عبر Lemon Squeezy أو Paddle (Merchant of Record)
+  - نظام الحماية يُسوّق كـ "Tamper-evident audit trail"
+
+
+=====================================================================
+  المصادر
+=====================================================================
+
+منتديات رسمية:
+- https://community.shopify.com/t/how-are-you-handling-landed-cost-per-unit-once-stocky-is-gone/661708
+- https://community.shopify.com/t/feature-request-landed-cost-field-in-purchase-order-receiving-workflow/650480
+- https://community.shopify.com/t/need-suggestions-for-inventory-management-app-with-accurate-landed-costs/95841
+- https://community.shopify.com/t/replace-my-spreadsheet-track-cost-revenue-and-margin-in-shopify/567219
+- https://community.shopify.com/t/prices-and-the-new-purchase-order-system/223157
+- https://community.shopify.com/t/drowning-in-excel-spreadsheets/561340
+- https://community.etsy.com/t5/Sewing-and-Selling/Inventory-software-for-fabric/m-p/125292284/highlight/true
+- https://community.etsy.com/t5/Etsy-Success/tracking-software/m-p/60637565
+- https://community.etsy.com/t5/chattymetalsmiths/Bookkeeping-inventory-Quickbooks-and-such-for-metalsmiths/td-p/23145985
+- https://productideas.xero.com/forums/967139-purchase-orders-bills-inventory/suggestions/45007927-inventory-bundle-multiple-products-together-with
+- https://productideas.xero.com/forums/967139-purchase-orders-bills-inventory/suggestions/44960650-inventory-add-default-tracking-options-to-items
+- https://quickbooks.intuit.com/community/other-questions-9/longtime-customer-deeply-disappointed-by-quickbooks-pricing-and-forced-migration-90743
+- https://quickbooks.intuit.com/community/other-questions-9/qb-desktop-price-increase-375055
+- https://forums.anandtech.com/threads/inventory-software.273997
+- https://redlib.hyperreal.coffee/r/Startup_Ideas/comments/1kg5lao/building_a_onetime_purchase_offline_accounting
+
+مواقع التقييم:
+- https://www.trustpilot.com/review/quickbooks.intuit.com
+- https://www.capterra.com/p/190778/QuickBooks-Online/reviews/
+- https://www.softwareadvice.com/product/393202-QuickBooks-Online/reviews/
+- https://www.capterra.com/p/78431/inFlow-Inventory/reviews/
+- https://www.softwareadvice.com/scm/inflow-inventory-profile/reviews/
+- https://capterra.com/p/146241/Zoho-Inventory/reviews/
+- https://g2.com/products/zoho-inventory/reviews?page=2
+- https://www.getapp.com/operations-management-software/a/zoho-inventory/reviews/
+- https://www.capterra.com/p/169199/Sortly-Pro/reviews/
+- https://www.capterra.com/p/94790/Acctivate/reviews/
+- https://www.capterra.com/p/151776/Inventory-Planner/reviews/
+- https://www.softwareadvice.com/scm/marketman-restaurant-management-profile/reviews/
+
+مقالات ومراجعات:
+- https://www.nerdwallet.com/business/software/reviews/quickbooks-online
+- https://softcrit.com/review/quickbooks-online-review/
+- https://www.inc.com/michelle-cheng/prices-quickbooks-accounting-software.html
+- https://softwareconnect.com/reviews/inflow-inventory/
+- https://www.inflowinventory.com/blog/xero-inventory-management/
+- https://www.unleashedsoftware.com/app-marketplace/xero-inventory-management/xero-inventory-management-guide/
+- https://calibreconsulting.ca/blog/odoo-self-implementation-small-business/
+- https://theledgerlabs.com/odoo-review-pros-cons-features-and-more/
+- https://thecfoclub.com/tools/katana-mrp-review/
+- https://www.selecthub.com/inventory-management-software/cin7-vs-katana-mrp/
+- https://nstock.pro/blogs/best-katana-alternatives
+- https://www.therestauranthq.com/technology/marketman-review/
+- https://www.miseservices.com/blog/best-recipe-costing-software-small-restaurants
+- https://qoblex.com/blog/shopify-cogs-accuracy-inventory/
+- https://www.capterra.com/resources/inventory-management-excel/
+- https://www.gogravity.com/blog/accounting-software-solves-excel-problems
+- https://supy.io/blog/learn-spreadsheet-recipe-costing-vs-software
+- https://www.vndly.io/blog/inventory-software-for-small-business-reddit
+- https://www.stockregister.in/blogs/stock-unit-conversion-piece-carton
+- https://hackceleration.com/labs/best/small-business-inventory-software
+- https://www.talentelgia.com/blog/inventory-management-software-cost-explained-features-pricing-hidden-expenses/
