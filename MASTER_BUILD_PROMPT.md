@@ -1883,11 +1883,11 @@ Every `condition` used by a `setup_warning` or conditional hint MUST be register
 
 1. The three most frequent actions of each screen are one click (or one shortcut) away; "New invoice" is reachable from anywhere (Ctrl+N in hub, Ctrl+Shift+N globally).
 2. Every action has a keyboard path; shortcuts are shown in menus, tooltips and the command palette.
-3. Line grids: arrows move between cells, Enter moves next (or down per setting), multi-row paste from Excel works everywhere a grid exists.
+3. Line grids: arrows move between cells **visually** (in RTL, ← goes to the cell on the screen's left), Tab/Shift+Tab follow logical order, Enter moves next (or down per setting), multi-row paste from Excel works everywhere a grid exists. Acceptance test in LTR and RTL.
 4. Create masters inline (Alt+C or "+ Create …" in pickers) without leaving the document.
 5. Command palette: Ctrl+K and Ctrl+Shift+P (Ctrl+K inside rich text inserts a link instead), plus a visible search box in the title bar.
 6. One save model per form: drafts autosave (3–5 s and on blur) with visible status; financial documents need explicit Issue/Post.
-7. Undo instead of "Are you sure?" for reversible actions (toast 8–10 s); confirmation dialogs only for irreversible actions (issue, close period, delete company); bulk destructive actions require typing the name.
+7. Undo instead of "Are you sure?" for reversible actions (toast 8–10 s); confirmation dialogs only for irreversible actions (issue, close period, delete company); bulk destructive actions require typing the name. Issue (F10, Ctrl+Shift+F10 or the button) always confirms: "Issue this invoice? Its number becomes final." — Enter = Issue, Esc = back.
 8. Issued documents: void or credit note with mandatory reason; never delete.
 9. Validate on blur; live checks only for duplicates, tax-ID format and negative stock; error summary at top on failed Issue with links to fields.
 10. Never show an error before the user typed; confirm fixes immediately.
@@ -1896,10 +1896,10 @@ Every `condition` used by a `setup_warning` or conditional hint MUST be register
 13. Empty states teach (one line + primary action + import).
 14. No information needed to finish a task inside tooltips or banners.
 15. Density app-wide (comfortable/compact), never mixed on one screen.
-16. Light/dark/black/high-contrast themes; font scale 90–150 %.
+16. Appearance per §17.9: 8 presets incl. high-contrast and low-vision, accent or brand colour, advanced colour overrides with contrast check; text scale 90–150 %, verified on 1366×768.
 17. Full RTL mirroring with logical CSS; numbers/codes LTR-isolated; numerals setting.
 18. Focus ring ≥ 2 px, never hidden; targets ≥ 24×24 px; contrast AA.
-19. One main window with tabs; restore open tabs and scroll positions on restart (ASSUMPTION).
+19. One main window with tabs (cap ≈ 12; views of tabs inactive > 5 min unmount, state kept in stores — §6); restore open tabs and scroll positions on restart (ASSUMPTION).
 20. Lists remember filters/sorting per user (saved views); "Reset view" available.
 21. Status always visible: Excel queue chip, backup age, license state, offline indicator not needed (always offline-capable).
 22. Long operations (>300 ms) show progress and are cancellable; the UI never freezes.
@@ -1909,8 +1909,9 @@ Every `condition` used by a `setup_warning` or conditional hint MUST be register
 26. Never change layout or shortcuts between versions without an ADR and a "What's new" note.
 27. Print preview = the PDF; printed documents always white.
 28. Every list exportable to Excel/CSV with the current filter.
-29. Owner-only information (cost, margin, other users' activity) never leaks into prints, exports to customers, or non-owner roles.
-30. Every screen ships with: banner copy (ar/en), empty state, F1 page, keyboard paths tested, RTL screenshot reviewed.
+29. Owner-only information (cost, margin, other users' activity) never leaks into prints, exports to customers, non-owner roles — or the Excel mirror, which bypasses roles (§12.1, §21.1).
+30. Every screen ships with a row in the screen registry (Appendix H): banner copy and a complete `features` list (ar/en), empty state, F1 page, `task_ids` with start and completion emitters, keyboard paths tested, RTL screenshot reviewed. Dialogs and wizards ship with a one-line subtitle. CI enforces the registry.
+31. Shortcuts bind by physical key (`KeyboardEvent.code`) and work under Arabic and Kurdish keyboard layouts.
 
 ---
 
@@ -1920,11 +1921,11 @@ Budgets are in §3.2. Measurement is part of every phase; results go to `docs/PE
 
 ### 20.1 Reference machines
 - **Ref-Low:** Windows 10 22H2 x64, 4 GB RAM, SSD, 4-core CPU ≥ 2016, 1366×768 — the budget machine (VM acceptable: 2 vCPU, 4 GB).
-- **Ref-HDD (informative):** same with HDD; record numbers, no hard gate (ASSUMPTION: cold start ≤ 3 s target).
+- **Ref-HDD (gated):** Windows 10 22H2 x64, 4 GB RAM, 5400/7200-rpm HDD, Intel Core i3 of about 2015 (2 cores / 4 threads), 1366×768 — typical hardware in the target markets. Gate: cold start ≤ 4 s (target 3 s), warm start ≤ 1.5 s, backup on close never blocks exit > 3 s; other budgets recorded.
 - **Ref-Mac (v2):** macOS 12+, 8 GB.
 
 ### 20.2 Fixtures
-- `scripts/gen-fixtures` creates deterministic company files: `small` (500 docs), `medium` (20k docs), `large` (250k documents, 2M lines, 50k items, 20k parties, 5k customers with statements). Includes Arabic and English names, mixed currencies, BOMs, projects.
+- `scripts/gen-fixtures` creates deterministic company files: `small` (500 docs), `medium` (20k docs), `large` (250k documents, 2M lines, 50k items, 20k parties, 5k customers with statements). Includes Arabic and English names, mixed currencies, BOMs, projects. `large` also concentrates one year's 2M lines (to test sheet roll-over and monthly splits), has a walk-in customer with 100k cash sales, and is used for the initial mirror build of 20k parties.
 
 ### 20.3 How to measure
 | Metric | Method |
@@ -1937,15 +1938,22 @@ Budgets are in §3.2. Measurement is part of every phase; results go to `docs/PE
 | UI latency | In-app instrumentation (`performance.now()` from keydown to next animation frame) logged in a dev build; p95 over scripted 500-keystroke session. |
 | Engine timings | Rust `criterion` benches: pricing resolution, tax calc (100-line doc), FIFO issue, posting, statement (5k rows), aging, Excel build (50k cells), Typst render (3 pages). |
 | Scroll | Dev overlay FPS meter while scrolling 100k-row list; record min fps. |
+| Tabs / minimized memory | Open 10 typical tabs on `large`, wait 60 s, sum private bytes; minimize for 60 s and sum again. |
+| Excel mirror | Initial build of `large` (wall time, files/min, keypress p95 during the build); one monthly master rebuild (time, peak memory); Excel folder size on disk. |
+| DB & backups | Company file size per 100k documents; backup duration on close and in the background on Ref-Low and Ref-HDD; backup folder size after 30 simulated days. |
+| Bundle | Vite build report: gz size of the initial chunk (shell + dashboard) and of each route chunk. |
 
 ### 20.4 Gates
 - CI (Windows runner): size check (hard), engine benches (regression > 20 % fails), unit/integration tests.
-- Release candidate: manual run on Ref-Low with `large` fixture; any hard-limit breach blocks release.
+- CI also fails on bundle-size hard limits and on installer growth > 300 KB without an ADR (§5.2).
+- Release candidate: run on Ref-Low **and Ref-HDD** with the `large` fixture; any hard-limit breach blocks release.
 
 ### 20.5 Techniques to stay within budget
 - Keyset pagination; covering indexes; FTS5 for search; `ANALYZE` after imports.
 - Virtualized lists and grids; no layout thrash; CSS containment.
-- Lazy-load screens (route-level code splitting); keep the initial JS bundle ≤ 250 KB gz (ASSUMPTION).
+- Lazy-load screens (route-level code splitting): initial JS (shell + dashboard) ≤ 150 KB gz and each screen chunk ≤ 60 KB gz (ASSUMPTION; measure); uPlot, Driver.js, the template designer, the report chart view and the BoQ editor load on first use.
+- WebView2 `MemoryUsageTargetLevel = Low` when minimized or idle; tab cap and view unmounting (§6).
+- Master Excel reports split by month and rebuilt with a ≥ 60 s debounce or on idle; `constant_memory` above 50k rows; stale files rebuilt lazily (§12.3).
 - Typst world cached (fonts loaded once, templates compiled once per version).
 - One renderer and one Excel writer at a time; bounded queues.
 - No timers faster than 1/min when idle; event-driven workers.
@@ -1963,31 +1971,46 @@ Budgets are in §3.2. Measurement is part of every phase; results go to `docs/PE
 - Signed artifacts: updates (Tauri updater signature, mandatory), country packs (Ed25519), license tokens (Ed25519).
 - Optional company-file encryption at rest (SQLCipher) — v2, ASSUMPTION (size/licensing to evaluate).
 - Logs local only, rotating, no customer data beyond IDs; "Export diagnostics" creates a zip the user can choose to send.
+- **The Excel mirror bypasses roles:** anyone with access to the Excel folder — including a cashier using the same Windows account — can read every customer's workbook. Settings → Excel says so in plain words and suggests a folder only the owner's Windows account can read. Cost, margin, salary and national ID are never mirrored; the owner-only `_Owner` reports subfolder is off by default (§12.6).
+- Permission `letters.issue_with_stamp` (owner/manager by default) guards issuing letters with stamp and signature; each such issue is audited (§16.4).
 
 ### 21.2 Licensing model (ASSUMPTION: research did not cover activation; validate MoR APIs before Phase 9)
 - **Purchase:** Lemon Squeezy (Merchant of Record) issues a license key; checkout collects country (preselects pack) and edition. (Paddle alternative requires our own key issuance.)
-- **Online activation:** app sends the key to the MoR license API (activate instance) and then to a tiny vendor "license signer" function (serverless, stateless) that re-validates the key and returns an **Ed25519-signed token**:
-  `{ v:1, key_hash, edition:"pro", major:1, licensee_hash, instance_id, machine_hint, issued_at, updates_until }`.
+- **Merchant of record check (A29, possible blocker):** before Phase 9, verify that the merchant of record accepts an Iraq-based seller and can pay out to Iraq (Stripe/PayPal coverage); if not, a company or bank account in another jurisdiction is needed.
+- **Online activation:** app sends the key to the MoR license API (activate instance) and then to a tiny vendor "license signer" function (serverless, stateless; full specification in Appendix J) that re-validates the key and returns an **Ed25519-signed token** (canonical JCS form, Appendix J):
+  `{ v:1, kid, key_hash, edition:"pro", major:1, licensee_hash, instance_id, machine_hint, issued_at, updates_until, addons:[] }`.
   The app verifies the token offline with the embedded public key on every start. No further network needed, ever.
 - **Offline activation:** app shows an **Activation Request Code** (Base32 of `{key_hash, machine_hint, nonce}`) + QR. The user opens the activation page on any device, pastes the code, receives a **Response Code** (the signed token, Base32/QR), pastes it back.
-- **Machine binding (soft):** `machine_hint` = hash of OS machine GUID + install salt; up to 3 activations per key (ASSUMPTION); self-service deactivate on the activation page; tolerant to hardware changes (token stays valid; re-activation only on OS reinstall).
+- **Machine binding (soft):** `machine_hint` = hash of OS machine GUID + install salt; up to 3 activations per key (ASSUMPTION); self-service deactivate on the activation page; tolerant to hardware changes (token stays valid; re-activation only on OS reinstall). The license is stored machine-wide (`machine.db`, §9.1), so every Windows user of the PC shares one activation.
 - **Trial:** 14 days full Pro features, stored in app.db plus a hidden marker; after expiry: drafts allowed; issuing new legal documents blocked until activation (ASSUMPTION — founder decision); **viewing, printing existing documents, exporting, Excel mirror and backups always work.**
 - **Updates entitlement:** `updates_until` (12 months for the major version). After it, the app keeps working; the updater shows "New major version available (paid upgrade)".
 - **No phone-home** after activation, no kill switch, no telemetry.
+
+### 21.3 Privacy & personal data
+- Data-protection laws (EU GDPR, UK GDPR, KSA PDPL and others — verify per market) apply to the user's customer, supplier and staff data. Everything is local, so the user is the controller; the app must make compliance easy:
+  - **Per-party personal-data export:** JSON + PDF summary of everything stored about one party or person (master data, documents list, letters, attachments).
+  - **Anonymization** of archived persons and parties after the legal retention period (pack `retention_years`; `null` → never): names, contacts, addresses and national IDs become "Anonymized #id"; frozen document snapshots are kept while the law requires the issued document to be retained, then redacted. Every anonymization is audited.
+  - **Privacy notice** (Help → Privacy): what is stored locally, that nothing leaves the PC except the network uses in §3.1, and how to export or delete data.
+- The `people` table (salary, national ID, HR data) is readable only by **owner and manager** roles (core-enforced) and is excluded from the Excel mirror.
+- **Payment cards:** never store full card numbers. Only `card_last4`, `card_auth_code` and `terminal_ref`. A validator rejects any payment, document or note text containing a Luhn-valid 13–19-digit card number: "Do not type full card numbers; keep only the last 4 digits."
+- Logs and diagnostics contain no personal data beyond IDs (§21.1).
 
 ---
 
 ## 22. Backups & data safety
 
 - **Live DB location:** local app data only. Warn and offer "Move to safe folder" if the company file sits in OneDrive/Dropbox/iCloud/Google Drive or a network share; if the user insists, switch to `journal_mode=TRUNCATE`.
-- **Automatic backups:** `VACUUM INTO 'Backups\<Company>\<slug>-YYYYMMDD-HHMM.adb'` (or `sqlite3_backup`) on app close and daily (first start of the day), plus before every schema migration and before restore/import operations.
-- **Rotation:** keep 7 daily, 4 weekly, 12 monthly (configurable).
+- **Automatic backups:** `VACUUM INTO` (small files) or the `sqlite3_backup` **step API** in the background (large files) into `Backups\<Company>\<slug>-YYYYMMDD-HHMM.adb`: daily (first start of the day, in the background), before every schema migration and before restore/import operations.
+- **On close:** back up only if the company changed since the last backup **and** the estimated duration (file size ÷ measured throughput) is under 3 s; otherwise mark "backup due" and run the step-API backup in the background at the next start. Closing never blocks for a backup longer than 3 s (§3.2; a ~1 GB file on an HDD would take 30–60 s).
+- **Bundle contents:** each backup is the `.adb` (brand assets and fonts live inside it as BLOBs, §9.2 Q) plus a manifest of attachment hashes; attachments are **always** included, copied once into `Backups\<Company>\attachments\<sha256>` (content-addressed and shared by all backups). Warn when attachments exceed 2 GB (ASSUMPTION) and show their size.
+- **Compression & cap:** compress backups with zstd (ASSUMPTION; measure the installer-size cost in Phase 0 — if > 300 KB, skip compression and rely on the cap). Total backup disk use is capped (default 5 GB or 10 % of free space, whichever is smaller; configurable): when exceeded, prune the oldest backups first (always keeping the newest daily, weekly and monthly), then unreferenced attachments.
+- **Rotation:** keep 7 daily, 4 weekly, 12 monthly (configurable), always subject to the cap.
 - **Verification:** run `PRAGMA integrity_check` on each new backup; mark failures loudly.
-- **Backup folder** may be in a synced folder or USB (each backup is a closed file). Optional ZIP bundle including attachments.
-- **Restore:** pick a backup → preview (company name, date, document counts) → restore into a new file (never overwrite the current one silently) → "Rebuild Excel files".
+- **Backup folder** may be in a synced folder or USB (each backup is a closed file). Its default root follows the OneDrive rule in §12.6.
+- **Restore:** pick a backup → preview (company name, date, document counts) → restore into a new file (never overwrite the current one silently) → numbering high-water-mark check (§10.5) → "Rebuild Excel files" (lazy, with progress, §12.3).
 - **Status:** dashboard shows last backup age; warning chip if > 7 days or last verification failed.
 - **Crash safety:** WAL + `synchronous=FULL`; editor autosave table for unsaved drafts; on restart offer "Recover unsaved draft".
-- **Disaster recovery doc:** `docs/help/*/backup.md` explains restore and moving to a new PC (copy `.adb` + attachments or use "Export company bundle").
+- **Disaster recovery doc:** `docs/help/*/backup.md` explains restore and moving to a new PC (copy the backup folder, or use "Export company bundle" = `.adb` + attachments + the `.hwm` sidecar).
 
 ---
 
@@ -2001,6 +2024,7 @@ Steps: **(1) Choose what to import** (customers, suppliers, items, prices, openi
 - Matching existing records by code first, then exact name (configurable).
 - Prices import supports scope (all / price list / party code) and `valid_from/valid_to`.
 - Paste-from-Excel into grids uses the same parsing rules.
+- Client BoQ files that must be returned "in the same layout" must be `.xlsx` (§15.12).
 - Migration helpers (v1, ASSUMPTION): presets for exports from QuickBooks, Xero, Zoho, Daftra, Wave (customer/item lists).
 
 ### 23.2 Exports
@@ -2009,6 +2033,7 @@ Steps: **(1) Choose what to import** (customers, suppliers, items, prices, openi
 - Statements → PDF/XLSX (single/bulk per customer).
 - Accountant pack (§14.9).
 - **Full data export** (data portability): ZIP of JSON per table + schema description + attachments; plus the raw `.adb` file.
+- Per-party personal-data export (§21.3).
 - Excel mirror (§12) is continuous and separate from on-demand exports.
 
 ---
@@ -2026,7 +2051,11 @@ Steps: **(1) Choose what to import** (customers, suppliers, items, prices, openi
 | Visual regression | key screens LTR/RTL, light/dark, comfortable/compact | screenshots in E2E |
 | Excel lock matrix | §12.11 items; on CI use a helper process that opens the file with no share flags to simulate Excel | Windows runner |
 | Validators | KoSIT (XRechnung), Peppol BIS 3 schematrons, ZATCA SDK, veraPDF (PDF/A-3) | optional CI job (Java) |
-| Fuzz | CSV/XLSX import parser, OFX/CAMT/MT940/QIF parsers, arithmetic cell parser | `cargo-fuzz` |
+| Fuzz | CSV/XLSX import parser, OFX/CAMT/MT940/QIF parsers, arithmetic cell parser, Typst data JSON, letter AST, visibility-rule AST, xlsx zip patcher | `cargo-fuzz` |
+| Injection | Typst data passing: names/notes containing `# $ * _ @ < ] \` and Typst code render literally | `tests/injection/` + golden PDFs |
+| Registry & traceability | every route has an Appendix H row (ar/en banner, `features`, F1 page); every task has start and completion emitters; every screen command is in its `features`; every mutating command has Excel targets or `#[no_excel]`; every Appendix K row has a tagged test | `check-registry.ts`, `check-traceability.ts`, Rust registry test |
+| Keyboard layouts | shortcuts under Arabic (101) and Kurdish layouts; visual arrow movement in RTL grids | E2E with the layout switched |
+| WebView2 | F5 / Ctrl+R never reload; Ctrl+P never opens Chromium print; no browser context menu, autofill or zoom | E2E |
 | Performance | §20 | criterion + scripts |
 | Accessibility | axe-core on screens; manual NVDA pass per release | axe, NVDA |
 | License audit | every dependency against Appendix G | `cargo-deny`, `license-checker` |
@@ -2042,6 +2071,8 @@ Coverage targets: engines ≥ 90 % lines; services ≥ 75 %; UI critical compone
 - `webviewInstallMode: embedBootstrapper` (default build) + "Offline installer" build with `offlineInstaller`.
 - Missing-WebView2 detection with a clear native message and link to the offline installer.
 - Uninstaller never deletes user data (company files, backups, Excel folders); offers "Open data folder".
+- The license is stored machine-wide in `%ProgramData%\AivoroDesk\machine.db`, writable without admin.
+- The e-invoicing add-on (ZATCA Phase 2, Peppol) is a separate signed download installed into the app's add-on folder; the base installer never contains its crypto (§5.2).
 
 ### 25.2 Code signing
 - Windows: OV code-signing certificate on a hardware token or cloud HSM (Sectigo, DigiCert KeyLocker, SSL.com eSigner; ≈ $219–420/yr + token). Sign the app exe, the NSIS installer and NSIS plugin DLLs (tauri-bundler ≥ 2.9.3 fixed unsigned plugin DLLs). Keep one publisher identity so SmartScreen reputation accumulates (no option gives instant trust).
@@ -2072,7 +2103,7 @@ Coverage targets: engines ≥ 90 % lines; services ≥ 75 %; UI critical compone
 | A5 | Installer hard limit 25 MB if Typst + fonts exceed 15 MB | Agent (measure) | Phase 0 |
 | A6 | Typst PDF/A-3 + embedded XML support for Factur-X (else post-process) | Agent (spike) | Phase 14 |
 | A7 | Typst Arabic kashida/complex RTL tables quality | Agent (spike) | Phase 0 |
-| A8 | `rust_xlsxwriter` sheet-level RTL setter exists | Agent (spike) | Phase 7 |
+| A8 | `Worksheet::set_right_to_left()` present in the pinned `rust_xlsxwriter` version (version check, not a spike) | Agent | Phase 0 |
 | A9 | Iraqi tax rules (VAT/sales tax, withholding on contractors, e-invoicing, official letter format, retention period) — **not researched** | Founder + Iraqi accountant | Phase 14 (IQ pack) |
 | A10 | All country-pack legal values (dates, thresholds, boxes) — from unverified knowledge | Tax adviser per country | Before selling in that country |
 | A11 | Licensing via Lemon Squeezy API + vendor signer; offline response codes; 3 activations; trial behaviour after expiry | Founder | Phase 9 |
@@ -2086,18 +2117,29 @@ Coverage targets: engines ≥ 90 % lines; services ≥ 75 %; UI critical compone
 | A19 | Local e-wallets/payment rails for Iraq/GCC (QR standards, deep links) | Founder | Phase 14 |
 | A20 | Multi-user over LAN: out of scope; SQLite on network shares refused | Founder | v2 research |
 | A21 | Next UI languages after ar/en | Founder (sales data) | v2 |
-| A22 | Date-input shortcuts, tab restore, initial JS ≤ 250 KB gz, coverage targets | Agent | Phase 1 |
+| A22 | Date-input shortcuts, tab restore, initial JS ≤ 150 KB gz and screen chunks ≤ 60 KB gz, coverage targets | Agent | Phase 1 |
 | A23 | Tafqeet and Hijri implementations clean-room (source licenses unverified) | Agent | Phase 5 / 16 |
 | A24 | Legal clause excluding use as a certified cash register in FR/DE/AT/PT/ES | Lawyer | Phase 9 |
 | A25 | Research gap: no Reddit/user-forum evidence for tax, payments, hub and contractor wishes | Founder (re-run research) | v1 planning |
+| A26 | Typst click-to-select: labels `<el-ID>` + introspector positions → hit boxes returned with the preview PNG | Agent (spike) | Phase 0 |
+| A27 | "بطاقات" in "ربط الفواتير بحسابات وبطاقات" means ledger cards (account / item / party) **and** payment cards — both are built (§14.10) | Founder (confirm) | Phase 6 |
+| A28 | Task reminders default to `always` until "Don't show again" (founder overrides the research's max-3 / cooldown / auto-retire defaults; `smart` stays an option) | Founder (decided) | Phase 1 |
+| A29 | Merchant of record accepts an Iraq-based seller and pays out to Iraq (Stripe/PayPal coverage) — possible blocker | Founder | Before Phase 9 |
+| A30 | `ar` catalog and all printed Arabic in Modern Standard Arabic; dialect only in an optional `ar-IQ` UI overlay | Founder (confirm) | Phase 1 |
+| A31 | "Light" = small download, fast start, low CPU and disk churn; WebView2 idle RAM floor ≈ 150–200 MB accepted, else the Avalonia fallback | Founder | Phase 0 go/no-go |
+| A32 | Installment / credit selling is needed (`document_installments`) | Founder interviews | Phase 12 |
+| A33 | Per-customer **folder** layout as the Excel default (`folder_per_customer`) | Founder (confirm) | Phase 7 |
+| A34 | Countries sold at the MVP stage: GENERIC + IQ placeholder + 2–3 verified packs; supported list shown at checkout and in the wizard | Founder + tax advisers | Phase 9 |
+
+Non-goals are listed in §2.1. The v2 candidates there (serial/batch/expiry tracking, item variants) need user validation before they enter any phase. The Starter extra currency (§4) is part of A3.
 
 ---
 
 ## 27. Phased roadmap — self-contained sub-prompts
 
-**Milestones.** **MVP (Starter release)** = Phases 0–9 · **v1 (Pro release)** = Phases 10–17 · **v2** = Phases 18–21.
-Paste one block per agent session. Each block assumes the agent has read §§0–26 and §28.
-Common to every phase (implicit acceptance criteria): CI green; no new forbidden licenses; perf budgets measured and recorded in `docs/PERF.md`; every new screen has ar/en banner copy, empty state, F1 page and keyboard paths; `CHANGELOG.md`, `docs/DECISIONS.md`, `docs/ASSUMPTIONS.md` updated; demo script `docs/demos/phase-N.md`.
+**Milestones.** **MVP (Starter release)** = Phases 0–9 incl. 8b · **v1 (Pro release)** = Phases 10–17 incl. 10b · **v2** = Phases 18–21.
+Paste one block per agent session. Each block assumes the agent has read §§0–26, §28 and Appendices A–K.
+Common to every phase (implicit acceptance criteria): CI green; no new forbidden licenses; perf budgets measured and recorded in `docs/PERF.md`; `docs/SIZE.md` updated (installer growth ≤ 300 KB or an ADR); every new screen has its Appendix H registry row (ar/en banner copy, complete `features` list, empty state, F1 page, task emitters) and keyboard paths; Appendix K rows touched by the phase carry test ids; HUMAN GATE criteria are left "pending human" with their proxies passed; `CHANGELOG.md`, `docs/DECISIONS.md`, `docs/ASSUMPTIONS.md` updated; demo script `docs/demos/phase-N.md`. Acceptance criteria are referenced as `P<phase>.AC<n>` (e.g. `P7.AC3`) in tests and in Appendix K.
 
 ---
 
@@ -2119,8 +2161,20 @@ BUILD:
    per-user install mode; install on a clean Windows 10 22H2 VM (4 GB RAM); detect missing WebView2 gracefully.
 5. Spike D (memory/start): measure idle private bytes (app + msedgewebview2 children) and cold/warm start per §20.3.
 6. Spike E (macOS, optional if a Mac is available): run the same build to note WKWebView CSS differences.
-7. Write docs/PERF.md (baseline), docs/DECISIONS.md (ADRs: Svelte vs Solid, specta, migrations crate, Typst crate
-   choice, font choice), docs/DEPENDENCIES.md with licenses.
+7. Spike F (Typst hardening): build Typst with package download and embedded default fonts disabled and record the
+   size delta; pass all data through a virtual JSON file (§17.1) and prove that names containing `# $ * _ @ < ] \`
+   and `#read(...)` render literally; prove click-to-select: label elements `<el-ID>`, query the introspector for
+   page/position/size, return hit boxes with the PNG preview (A26).
+8. Spike G (WebView2): apply the §6 runtime settings; prove F5, Ctrl+R, Ctrl+P and Ctrl+F reach the app instead of
+   the browser; measure memory idle, with 10 tabs, and minimized with MemoryUsageTargetLevel=Low.
+9. Spike H (fonts): render Arabic UI text with system Segoe UI (shaping, digits, bold) at 100 % and 150 %; ADR on
+   whether a bundled UI font is needed.
+10. Spike I (Excel extras): xlsx zip-level patch round trip on a client-style file (merged cells, styles, Arabic,
+   formulas) — only target cells differ (cell-level diff) and Excel opens it without repair; confirm
+   `set_right_to_left()` in the pinned rust_xlsxwriter (A8); detect a Documents folder redirected into OneDrive.
+11. Spike J (Ref-HDD): cold start on the Ref-HDD machine (§20.1); zstd size cost for backups (§22).
+12. Write docs/PERF.md (baseline), docs/SIZE.md (size ledger), docs/DECISIONS.md (ADRs: Svelte vs Solid, specta,
+   migrations crate, Typst crate choice, HTTP/TLS stack, font choice), docs/DEPENDENCIES.md with licenses.
 DO NOT BUILD: any business feature or real schema.
 ACCEPTANCE CRITERIA:
 1. Repo builds on CI (Windows) and produces an installer; size reported; size ≤ 25 MB hard limit (target 15 MB).
@@ -2131,25 +2185,35 @@ ACCEPTANCE CRITERIA:
 4. Clean-VM install works without admin; missing WebView2 shows a clear message (not a blank window).
 5. Idle memory and cold start measured and recorded; if any hard limit is breached, an ADR proposes the fix or
    the fallback (§5.4) and the phase is marked NO-GO for human review.
-DELIVERABLES: skeleton repo, spikes under /spikes (kept), PERF.md, ADRs, a go/no-go summary in docs/demos/phase-0.md.
+6. Spikes F–J pass or have an ADR with the fallback; Ref-HDD cold start ≤ 4 s; the go/no-go summary asks the
+   founder to record A31 (WebView2 RAM floor).
+DELIVERABLES: skeleton repo, spikes under /spikes (kept), PERF.md, SIZE.md, ADRs, a go/no-go summary in
+docs/demos/phase-0.md.
 ```
 
 ### Phase 1 — App shell, i18n/RTL, theming, help framework · MVP
 ```text
-Read §§3, 5–8, 17.9, 18, 19, Appendix A. Phase 0 must be GO.
+Read §§3, 5–8, 17.9, 18, 19, Appendices A and H. Phase 0 must be GO.
 GOAL: The empty but polished application frame every later screen plugs into.
 BUILD:
-1. app.db with profiles, user_ui_prefs, hint_state, recent_companies, license (schema §9.1) + migrations.
-2. AppShell: single main window, in-app tabs (open/close/reorder, restore on restart), title-bar search box,
-   command palette (Ctrl+K, Ctrl+Shift+P) listing registered actions with shortcuts, global shortcut registry
-   (Appendix A), status-chip area, Settings screen skeleton.
-3. i18n: ar/en catalogs, ICU-lite messages with Intl.PluralRules/NumberFormat/DateTimeFormat; dir switching;
-   CSS logical properties only; numerals setting (latn/arab); LTR isolation helpers for numbers/codes.
-4. Theming: tokens.css, OKLCH palette generator from one accent color with WCAG contrast check and auto-nudge,
-   modes light/dark/black/high-contrast/system, density comfortable/compact, font scale 90–150 %.
-5. Help framework: hint catalog loader, HintManager with the exact eligibility rule (§18.4), ScreenBanner
-   component (§18.5), TaskHint popover (§18.6) with Driver.js mini-tour, EmptyState component, Settings → Help &
-   tips (help level, toggles, Reset all tips, reset per screen), F1 side panel rendering local Markdown.
+1. app.db (profiles, user_ui_prefs incl. task_reminder_mode and theme columns, hint_state, recent_companies,
+   series_hwm) and machine.db (license, shared_companies, printer_calibrations) per §9.1 + migrations.
+2. AppShell: single main window, in-app tabs (open/close/reorder, restore on restart, cap ≈ 12, unmount after
+   5 min), WebView2 runtime settings (§6), title-bar search box, command palette (Ctrl+K, Ctrl+Shift+P) listing
+   registered actions with shortcuts, global shortcut registry bound by KeyboardEvent.code (Appendix A),
+   status-chip area, Settings screen skeleton.
+3. i18n: ar (Modern Standard Arabic) / en catalogs + optional overlay loader (ar-IQ); the in-house ICU-lite
+   formatter (§3.6) with Intl.PluralRules/NumberFormat/DateTimeFormat; dir switching; CSS logical properties
+   only; numerals setting (latn/arab); LTR isolation helpers for numbers/codes.
+4. Theming and the Appearance screen per §17.9: tokens.css, OKLCH palette generator with WCAG contrast check and
+   auto-nudge, 8 presets + System, accent + "Use my brand colour", advanced overrides, density, text scale
+   90–150 %, UI font, bold text, reduced motion, live preview, reset, export/import JSON.
+5. Help framework: hint catalog loader, HintManager with the exact eligibility rule (§18.4) incl.
+   task_reminder_mode (always/smart/off) and the popover queue, ScreenBanner (§18.5) with the "All features on
+   this screen (N)" expander, TaskHint popover (§18.6) with Driver.js mini-tour and the completion toast,
+   EmptyState component, condition registry (§18.13), screen & task registries (Appendix H) with CI checks,
+   Settings → Help & tips (help level, toggles, reminder mode, Reset all tips, reset per screen), F1 side panel
+   showing build-time pre-rendered help with a prebuilt search index.
 6. Core DataGrid component (virtualized, keyboard map Appendix A, RTL, multi-row paste parser returning a
    matrix, end-aligned numbers) with a demo screen using 100k fake rows.
 7. Error model (AppError → localized message), logging (local rotating), main window shown only when UI ready.
@@ -2162,7 +2226,20 @@ ACCEPTANCE CRITERIA:
 4. DataGrid: 100k rows scroll ≥ 50 fps on Ref-Low; arrows/Enter/Tab/F2/Esc/Ctrl+D work in LTR and RTL; pasting
    a 20×4 block from Excel produces the expected matrix (test with real clipboard text incl. Arabic).
 5. Command palette finds actions in both languages; shortcuts shown match the registry.
-6. Cold start still ≤ 1.5 s; idle memory ≤ 200 MB.
+6. Cold start still ≤ 1.5 s; idle memory ≤ 200 MB; initial JS ≤ 150 KB gz.
+7. Task reminders: in `always` mode the task hint appears on the 10th start of the same task (also after two
+   completions and within 24 h); "Don't show again" at the start or in the completion toast stops it for good;
+   never two popovers at once (queue); `smart` mode reproduces the research rules of §18.4.
+8. Banner "All features on this screen (N)" lists every registered command of the demo screens in ar and en (CI);
+   the registry check fails when a route lacks a row, banner copy, feature list or F1 page.
+9. Appearance: 8 presets, accent + "Use my brand colour", advanced overrides with live contrast check and
+   auto-adjust, density, text scale 90–150 %, UI font, bold text, reduced motion, live preview, reset,
+   export/import JSON; changes apply without restart and persist per profile; random-colour contrast tests pass in
+   light and dark; chips distinguishable in a grayscale screenshot; at 150 % on 1366×768 no clipped text.
+10. WebView2: F5 and Ctrl+R never reload; Ctrl+P never opens the Chromium print dialog; no browser context menu,
+   autofill or zoom; DevTools off in release builds.
+11. With the Arabic keyboard layout active, Ctrl+K, Ctrl+S, Ctrl+], Ctrl+[ and Alt+C work (E2E); in RTL grids the
+   arrow keys move visually and Tab moves logically.
 ```
 
 ### Phase 2 — Company file, audit, parties, items, units · MVP
@@ -2178,15 +2255,22 @@ BUILD:
    categories, items (+ codes, aliases, FTS5 search), warehouses.
 3. List screens with saved views, filters, export to XLSX/CSV; detail forms with validation on blur; inline
    creation (Alt+C) API reusable by later pickers; soft delete (archive) with undo toast.
-4. Automatic backup on close + daily via VACUUM INTO with rotation and integrity_check (§22); "Backup now";
-   restore into a new file.
-5. Banners, empty states and F1 pages for Customers, Suppliers, Items.
+4. Backups per §22: on close only if changed and estimated < 3 s (else background step-API backup at next start),
+   daily, attachments manifest, disk cap, rotation, integrity_check; "Backup now"; restore into a new file.
+5. Banners, feature lists, empty states and F1 pages for Customers, Suppliers, Items (registry rows).
+6. Data roots (§6): "Only me" / "All Windows users of this PC" (ProgramData + ACL); profile picker when a company
+   has more than one member; owner recovery code (printed PDF, hash stored); brand assets and fonts stored as
+   BLOBs (asset_blobs); `people` restricted to owner/manager; parties.excel_mirror; Walk-in customer created.
 ACCEPTANCE CRITERIA:
 1. Creating 1,000 parties and 50,000 items via fixtures keeps typeahead p95 ≤ 50 ms and list scroll smooth.
 2. Every create/update writes an audit row; tampering with an audit row is detected by the integrity check.
 3. Opening a company file from a OneDrive folder or UNC path shows the warning and offers move.
 4. Backup files are created, rotated (7/4/12) and verified; restore produces an identical document count.
 5. Arabic and English names searchable (incl. aliases); archived records hidden by default and restorable.
+6. A second Windows user on the same PC opens a shared company without consuming another activation; a
+   forgotten owner PIN is reset only with the recovery code (audited).
+7. Closing the app with a 1 GB company file on Ref-HDD never blocks > 3 s; the deferred backup runs at the next
+   start; total backup size respects the cap.
 ```
 
 ### Phase 3 — Dated & scoped prices, import wizard, paste · MVP
@@ -2194,8 +2278,9 @@ ACCEPTANCE CRITERIA:
 Read §§9.2 E, 10.2, 23, 12.7 (Prices sheet columns).
 GOAL: The price engine and the Excel import experience — two of the strongest selling points.
 BUILD:
-1. price_lists and prices tables; pricing resolution engine exactly as §10.2 with unit tests for every
-   priority/tie rule, UoM conversion and currency conversion (FX table stub with manual rates).
+1. price_lists and prices tables (incl. prices.price_mode); pricing resolution engine exactly as §10.2 with unit
+   tests for every priority/tie rule, UoM conversion, currency conversion (FX table stub with manual rates) and
+   incl/excl conversion.
 2. Prices screen: per item timeline (all / price list / party scopes, min qty, valid from/to), bulk price
    update by % or amount from a date with impact preview ("affects N items, M drafts"), never touching issued
    documents.
@@ -2205,7 +2290,8 @@ BUILD:
 4. Parsing rules: encodings incl. Windows-1256, Arabic-Indic digits, decimal/thousand separators, date formats.
 ACCEPTANCE CRITERIA:
 1. Golden tests: 40+ pricing scenarios (party vs list vs all, overlapping dates, min_qty breaks, same-day ties,
-   valid_to boundaries inclusive, UoM carton→piece, USD price on IQD document).
+   valid_to boundaries inclusive, UoM carton→piece, USD price on IQD document, tax-inclusive price on a
+   tax-exclusive document).
 2. Importing a 10,000-row Arabic customer sheet (Windows-1256 CSV and XLSX) completes ≤ 10 s with correct text.
 3. Undo import removes only untouched imported records and is audited.
 4. Back-dated price change preview lists affected drafts and changes no issued data (test asserts hashes).
@@ -2213,18 +2299,22 @@ ACCEPTANCE CRITERIA:
 
 ### Phase 4 — Tax engine core, numbering, Invoice Hub core · MVP
 ```text
-Read §§9.2 H–I, 10.5, 10.6 (interfaces only), 10.9, 11.1–11.5, 13.1–13.6, 19, Appendix A.
+Read §§8, 9.2 A–B and H–I, 10.5, 10.6 (interfaces only), 10.9, 11.1–11.5, 13.1–13.6, 19, Appendices A and C.
 GOAL: Create, issue, void and credit quotes, invoices and cash sales with correct tax and gapless numbers.
 BUILD:
-1. Tax tables, GENERIC + one real pack format loader (signature check stub), tax calculation per §11.3
-   (category & line modes, inclusive/exclusive, compound groups, document discounts/charges allocation,
-   withholding below total, cash rounding, local-currency tax), document_tax_summary.
-2. number_series with patterns and yearly reset; issue transaction per §11.5 (number + snapshots + hash).
+1. Tax tables; signed country-pack loader with real Ed25519 verification and Appendix C.2 validation; GENERIC +
+   IQ placeholder + the 2–3 packs targeted for MVP sale (A34; "Tax Invoice" titles only from verified packs);
+   company_tax_registrations; tax calculation per §11.3 (category & line modes, inclusive/exclusive, compound
+   groups, document discounts/charges allocation, withholding below total, cash rounding increment,
+   calc_decimals, tax_point_date, tax_fx_rate/source per the pack's tax_fx_rule), document_tax_summary.
+2. number_series with patterns and yearly reset; issue transaction per §11.5 (number + party/seller snapshots +
+   content_hash + document_events chain in JCS) and the numbering high-water mark (§10.5).
 3. Invoice Hub screen (§13.2) and Document Editor (§13.4–13.5) for QUOTE, INVOICE, CASH_SALE, CREDIT_NOTE:
    party picker with balance badge, item typeahead, inline create, price source chip, last-price panel,
    arithmetic cells, multi-row paste with column mapping, live totals from core, autosave drafts
    (editor_autosave + crash recovery), Issue/Void/Credit note flows, conversion QUOTE→INVOICE with
-   source_line_id, pre-issue validator framework (§11.4) with generic rules.
+   source_line_id, pre-issue validator framework (§11.4) with generic rules incl. tax registration; Issue = F10
+   with the §19.7 confirmation, Ctrl+P = print/preview only, Ctrl+Enter = insert line; "Correct this invoice".
 4. Status chips, error summary with jump-to-field, owner-only margin column (F9, PIN) hidden from others.
 DO NOT BUILD: PDF (Phase 5), payments (Phase 6), Excel (Phase 7).
 ACCEPTANCE CRITERIA:
@@ -2233,17 +2323,31 @@ ACCEPTANCE CRITERIA:
 2. Concurrency test: 1,000 issues in random order never produce duplicates or gaps; drafts never consume numbers.
 3. Issued documents cannot be edited through any API (tests); void requires reason and keeps the number;
    credit note references the original and can be partial.
-4. Keyboard-only creation of a 20-line invoice incl. a new inline customer and item takes ≤ 90 s for a
-   scripted tester; keypress→paint p95 ≤ 50 ms.
+4. HUMAN GATE: keyboard-only creation of a 20-line invoice incl. a new inline customer and item takes ≤ 90 s for
+   a scripted tester. Agent-checkable proxies: the E2E script creates the same invoice keyboard-only, its
+   keystroke count is recorded and stays ≤ 260 (ASSUMPTION), every control on the path is keyboard-reachable,
+   and keypress→paint p95 ≤ 50 ms.
 5. Killing the app mid-edit and restarting offers recovery of the unsaved draft.
+6. A company not registered for VAT never prints VAT lines or "Tax Invoice"; VAT on a document dated before the
+   registration date is blocked; unverified packs never print "Tax Invoice".
+7. Editing a customer after issue changes nothing in the issued document's snapshot, content_hash or exports; the
+   integrity check recomputes every content_hash and chain link from stored rows and finds a tampered row.
+8. Restoring an older backup cannot produce a duplicate number: issuing is blocked until the series continues
+   after the high-water mark (audited).
+9. Ctrl+Enter and Ctrl+P never issue a document (E2E); F10 always shows the confirmation.
+10. Golden tests: Canadian GST+QST on the same base; IQD at calc_decimals 0 prints lines that sum to the total;
+   tax FX by pack rule; "Correct this invoice" yields a full credit note + linked draft.
+11. Owner-only margin never reaches non-owner roles, prints, customer exports or Excel (test).
 ```
 
 ### Phase 5 — PDF rendering, gallery templates, brand · MVP
 ```text
-Read §§16.4 (tafqeet, Hijri), 17 (all), 11.7 (QR block only).
+Read §§16.4 (tafqeet, Hijri), 17 (all), 11.7 (QR block only), 14.3 and 14.8 (pay-to account), Appendix I.
 GOAL: Beautiful, correct bilingual PDFs for every Phase-4 document and the statement.
 BUILD:
-1. Template JSON schema (§17.2) + Rust generator JSON→Typst; template versions (copy-on-write); assignments.
+1. Template JSON schema (§17.2) + Rust generator that emits a fixed Typst template and passes all data as a
+   virtual JSON file conforming to the print data contract (Appendix I) — never concatenating user strings
+   (§17.1); template versions (copy-on-write); assignments.
 2. Gallery v1: Classic, Modern, Bilingual Arabic/English, Minimal (A4/Letter/A5); Brand settings (logos,
    colors, fonts, stamp, signature); "Apply my brand"; "Reset to gallery default".
 3. Basic template settings UI (Starter level): toggle sections/columns, labels per language, logo size/position,
@@ -2252,18 +2356,24 @@ BUILD:
 5. Tafqeet module (Arabic + English, currency names incl. IQD/SAR/AED/USD/EUR) with golden tests; Hijri display.
 6. Generic QR block (URL/text) and the pack-driven QR interface (implementation of ZATCA TLV in Phase 14).
 7. On Issue: render and store PDF + sha256 + template version on the document; DRAFT watermark for drafts.
-8. "Print" opens the PDF in the default viewer; bulk PDF export.
+8. "Print" opens the PDF in the default viewer; bulk PDF export; Ctrl+P = print/preview the current state.
+9. Dual-currency total line, pay-to account payment block, receipt/payment voucher templates.
 ACCEPTANCE CRITERIA:
 1. PDF golden images (Arabic-primary, English-primary, bilingual side-by-side) match within tolerance.
 2. A 60-line invoice paginates with repeated headers, carried-forward subtotal and totals on the last page.
 3. Editing a template after issuing does not change the stored PDF of issued documents (hash test).
 4. Amount-in-words golden tests pass (≥ 100 numbers incl. 3–10 gender agreement and decimals).
 5. Logo of any aspect ratio prints at the configured max height without square-ratio shrinking.
+6. Injection fuzz: party names, descriptions and notes containing `# $ * _ @ < ] \` or Typst code render
+   literally (golden PDFs + 10 min cargo-fuzz without escape or crash).
+7. Every field used by the gallery templates exists in the Appendix I schema (schema validation test).
+8. The dual-currency line prints the second-currency total at the stated rate and date; the pay-to account's
+   bank name, IBAN/account number and currency print in the payment block.
 ```
 
 ### Phase 6 — Payments, accounts, posting, statements, simple stock · MVP
 ```text
-Read §§9.2 J, 10.6–10.8, 12.9 (statement spec), 14.1–14.6, Appendix E.
+Read §§9.2 J and N, 10.6–10.8, 12.9 (statement spec), 14.1–14.10, 17.10, 21.3 (cards), Appendix E.
 GOAL: Money in/out linked to invoices, correct balances, statements and aging; Starter-level bills/expenses/stock.
 BUILD:
 1. Default chart of accounts (§14.2), payment accounts UI (cash, bank per currency, card/processor with fees,
@@ -2275,6 +2385,17 @@ BUILD:
 4. Statements: activity + outstanding, configurable aging edges/basis, per currency, PDF via Phase-5 engine,
    statement_runs snapshots; AR/AP aging reports; lock_date.
 5. Nightly/at-start integrity job: balances of every journal entry, cached balance_due vs allocations.
+6. Account resolution (§10.6: item accounts, 4100 for services/labour, document_lines.account_code on non-stock
+   bills/expenses), journal_lines.branch_id, derived 3200 retained earnings, stock-gain posting, non-recoverable
+   input tax, sub-accounts under 1010/1020/1030/1040/4xxx/6xxx, receipt/payment voucher series (gapless on
+   post), outgoing cheques, card last-4 only, pay_to_account_code.
+7. Cards (§14.10): account card, item card, party card, with a "Card" button (Ctrl+L) on every account, item and
+   party.
+8. Report runner (§17.10): assets/reports/catalog.json, report_layouts, Starter features (column chooser, sort,
+   filter, saved layouts, PDF via one generic Typst table template, XLSX) for: sales by customer/item/period,
+   P&L ("How much did I make"), Balance sheet ("What I own and owe"), cash-flow summary, AR/AP aging, statement,
+   item movement card, stock valuation, cash/bank book, expenses by category, price list, customer list.
+9. document_installments schema (UI in Phase 12).
 ACCEPTANCE CRITERIA:
 1. Property tests: every entry balances; Σ allocations ≤ payable; aging total = closing (refuse export otherwise).
 2. Scenario tests: partial payments; one payment over 3 invoices; overpayment then auto-apply to next invoice;
@@ -2282,65 +2403,122 @@ ACCEPTANCE CRITERIA:
 3. Re-opening a saved statement shows exactly what was generated (hash match) after new transactions.
 4. Posting before lock_date is rejected with a clear message.
 5. Starter user never sees debit/credit wording in Guided help level (UI copy review).
+6. Report layouts: change columns and sort, save "My layout", restart, reopen identical; A4 landscape PDF with
+   logo; PDF totals = XLSX totals = screen totals; `large` fixture reports paginated with p95 ≤ 1 s.
+7. The balance sheet balances (assets = liabilities + equity incl. derived retained earnings) on every fixture
+   (property test); P&L of all years equals the change in retained earnings.
+8. A full card number typed into any payment or notes field is rejected; only last 4 digits are stored.
+9. Cards: the account card's running balance equals the account balance at every row; the item card's running
+   quantity equals stock on hand; the party card equals the statement; every row drills down to its source.
 ```
 
 ### Phase 7 — Excel mirror · MVP
 ```text
-Read §12 entirely, §9.2 O, §22.
-GOAL: Every operation is mirrored to per-customer workbooks and master reports, safely and invisibly.
+Read §12 entirely, §9.2 O, §21.1, §22, Appendix D.
+GOAL: Every operation is mirrored to per-customer folders and master reports, safely, invisibly and lightly.
 BUILD:
-1. export_outbox written in the same transaction as every relevant mutation (parties, prices, documents,
-   payments, allocations); worker with debounce, grouping, priority bump, one write at a time.
+1. Command registry with Excel targets; export_outbox written in the same transaction by every mutating command
+   (or #[no_excel(reason)]); drafts never queue; docs/APPENDIX_D.md generated; worker with per-class debounce
+   (party 1.5–3 s, master ≥ 60 s or idle, synced root ≥ 60 s), grouping, priority bump, stale/lazy rebuilds with
+   a files-per-minute cap that pauses while typing or on battery, progress, one write at a time.
 2. Atomic Windows write with retries, Restart Manager lock holder, conflict move to _conflicts, startup cleanup.
-3. Workbooks: per customer (all sheets §12.7), per supplier, Reports (Customers + AR aging, Suppliers + AP
-   aging, Sales YYYY, Payments YYYY, Items & Prices). Formatting per §12.8 with brand colors; values not formulas;
-   cached formula results; sheet RTL for Arabic (or ADR if not available).
+3. Workbooks: folder per customer (§12.6, A33) with the workbook (all sheets §12.7 incl. Prices A/B/C and
+   Statement_<CCY>), Invoices\ PDFs (hard links/copies) and Statements\; per supplier; file_per_customer option;
+   master reports split by month + yearly summaries (Sales, Purchases, Payments, Cash sales, Activity from
+   audit_log, Expenses, Cash & Bank, Stock moves, Ledger, Letters, VAT, Customers, Suppliers, Items & Prices);
+   constant_memory without Tables above 50k rows; roll-over at 1,000,000 rows; walk-in excluded; yearly split of
+   large customers. Formatting per §12.8 with brand colors; values not formulas; cached formula results; RTL by
+   company primary_lang; only Summary protected.
 4. Locked-file UX: status chip, retry triggers (focus, ~$ watcher, backoff), "Open latest copy", Settings → Excel
-   (folder choice, Rebuild all, Problems list with retry).
-5. Filename/sheet/table sanitization; rename-follows-party.
-ACCEPTANCE CRITERIA: all items of §12.11 pass (1–7), plus: issuing an invoice never takes longer because of
-Excel (commit p95 unchanged ±10 %); "Rebuild all" for the `medium` fixture finishes without exceeding the peak
-memory budget.
+   (folder choice, layout, Rebuild all, Problems list with retry, role warning, _Owner folder off by default).
+5. Filename/sheet/table sanitization; rename-follows-party; OneDrive/Dropbox/Google Drive detection and the
+   %USERPROFILE%\Aivoro Desk default root.
+ACCEPTANCE CRITERIA (all items of §12.11, 1–15, pass, plus):
+1. Issuing an invoice never takes longer because of Excel (commit p95 unchanged ±10 %).
+2. "Rebuild all" for `medium` and the initial build of `large` stay within the §3.2 time, peak-memory and
+   folder-size budgets, with progress shown and keypress p95 unchanged ±10 %.
+3. Every mutating command maps to an Excel target or #[no_excel(reason)]; Appendix D regenerates without a diff.
+4. Draft autosave never queues; with 2M lines no sheet exceeds 1,000,000 rows and the monthly master rebuild
+   stays within budget.
+5. 1,000 walk-in Quick sales never rebuild one giant per-party file.
+6. A brand change marks 20k workbooks stale and rebuilds them lazily without UI stutter.
+7. A Documents folder redirected into OneDrive is detected; the default root moves to %USERPROFILE%\Aivoro Desk.
+8. tblInvoices sorts and filters in Excel; no cost, margin, salary or national ID in any mirrored file (scan).
 ```
 
 ### Phase 8 — Onboarding complete, sample company, F1 help · MVP
 ```text
-Read §18 entirely, §19, §2.
+Read §18 entirely, §19, §2, Appendices B and H.
 GOAL: A first-time user gets productive in minutes without a forced tour.
 BUILD:
 1. Welcome screen; setup wizard (≤ 4 steps) with live invoice preview; setup_warnings for skipped steps.
 2. Dashboard with "Today" panel (overdue, expiring quotes, Excel queue, backup age) and the 6-item
    "Get started" checklist (pre-ticked first item, collapsible, hideable, no gating).
 3. Sample company generator (scripts/gen-demo) and DEMO banner/watermark; "Switch to my company".
-4. All screen banners from §18.12 (ar/en), task hints for: invoice create (paste), issue (numbers are final),
-   void vs credit note, owner margin, receive payment, statement, Excel locked; empty states everywhere.
+4. Banners, complete `features` lists and registry rows for every screen built so far (Appendix H; ar in Modern
+   Standard Arabic, en), task hints for: invoice create (paste), issue (numbers are final), void vs credit note,
+   owner margin, receive payment, statement, Excel locked; completion toasts; dialog subtitles; empty states
+   everywhere.
 5. F1 Markdown help pages ar/en for every screen built so far; "What's new" banner mechanism.
 6. Copy review against §18.11 (both languages written natively).
 ACCEPTANCE CRITERIA:
-1. Usability test (5 people, scripted): from install to first issued invoice with logo in ≤ 10 minutes for 4/5.
-2. No more than one proactive hint visible at any time; ≤ 3 per session (automated UI test).
-3. "Don't show again" persists across restarts and company switches; "Reset all tips" restores everything.
+1. HUMAN GATE: usability test (5 people, scripted): from install to first issued invoice with logo in ≤ 10
+   minutes for 4/5. Agent-checkable proxies: the E2E first-run script reaches an issued invoice with logo in
+   ≤ 40 UI actions (ASSUMPTION; record the count), every step is keyboard-reachable, and every screen on the path
+   shows its banner.
+2. Never more than one proactive popover at a time (queue test); in `smart` mode ≤ 3 per session; in `always`
+   mode task hints repeat on every start until dismissed (automated UI tests).
+3. "Don't show again" (at start or from the completion toast) persists across restarts and company switches;
+   "Reset all tips" restores everything.
 4. Demo data never appears in the real company file (test); DEMO watermark on all demo PDFs.
+5. Registry CI: every route has an Appendix H row with ar/en banner text, a complete feature list and an F1 page;
+   every task_id has a start and a completion emitter; the ar catalog contains no dialect markers (lint list).
+```
+
+### Phase 8b — Letters-lite · MVP
+```text
+Read §16 (16.2–16.5), §9.2 M, §10.5, §17.1, §21.1, Appendix I (letter fields).
+GOAL: Official letters — a founder priority — in the first release.
+BUILD: people (minimal, owner/manager only), signers, letter registers (outgoing/incoming, pattern numbering,
+high-water mark), incoming-letter form (sender, external ref/date, received_at, scan, reply link), letter editor
+with the rich-but-safe JSON AST (§16.5), the 8 Letters-lite templates with their fields_json (formal letter, to
+whom it may concern, salary certificate, experience certificate, authorization, receipt voucher, payment voucher,
+balance confirmation), issue → immutable + chained in document_events, stamp/signature behind the
+letters.issue_with_stamp permission (audited), Hijri date, amount in words, Letters Excel register, banners,
+feature lists, F1 pages and registry rows.
+ACCEPTANCE CRITERIA:
+1. Register numbers are gapless per year and follow the pattern; restoring an old backup cannot reuse a number.
+2. Each of the 8 templates renders in ar and en without overflow; letter bodies containing Typst-like text render
+   literally.
+3. Issuing with stamp requires the permission and writes an audit event; issued letters cannot be edited.
+4. Incoming letters are searchable by sender, external reference and date; a reply links to its incoming letter.
 ```
 
 ### Phase 9 — Licensing, packaging, signing, updater → MVP release · MVP
 ```text
-Read §§3.3, 21, 22, 25, 26 (A1–A3, A11, A12, A24).
+Read §§3.3, 4 (marketing rule), 11.2 (MVP country scope), 21, 22, 25, 26 (A1–A3, A11, A12, A24, A29, A34),
+Appendix J.
 GOAL: Ship the Starter edition.
 BUILD:
-1. Edition/feature gating from assets/editions.json; trial (14 days); activation online (MoR API + signer
-   function, documented separately) and offline (request/response codes with QR); Ed25519 token verification;
-   deactivate flow; Settings → License screen; post-trial behaviour per A11 (never block view/export/backup).
+1. Edition/feature gating from assets/editions.json (incl. available_in); trial (14 days); activation online (MoR
+   API + signer function per Appendix J — verify A29 first) and offline (request/response codes with QR);
+   Ed25519 token verification with kid; machine-wide license in machine.db; deactivate flow; Settings → License
+   screen; post-trial behaviour per A11 (never block view/export/backup).
 2. Updater: tauri-plugin-updater, signed latest.json via tauri-action, manual check + optional daily check,
    download only with consent, pre-migration backup, "What's new".
 3. Installers: embedBootstrapper and offline variants, per-user install, signing of exe/installer/plugins.
 4. EULA + tax disclaimer + per-country coverage statement (from packs).
-5. Release checklist run (§28) on Ref-Low with `large` fixture; clean VM install and upgrade test.
+5. Release checklist run (§28) on Ref-Low and Ref-HDD with `large` fixture; clean VM install and upgrade test.
+6. Supported-country list (A34) in checkout copy, EULA and setup wizard; privacy notice and per-party
+   personal-data export (§21.3); Upgrade screen lists only shipped capabilities (§4 marketing rule).
 ACCEPTANCE CRITERIA:
 1. Fresh install → trial → activate online; and on an air-gapped VM → activate offline via codes.
 2. Tampered token or pack signature is rejected; app still opens existing data read-only-for-issuing.
 3. Update from previous build migrates data, keeps templates byte-identical in output, shows one What's new.
 4. All MVP budgets met; Definition of Done checklist fully ticked.
+5. A second Windows user on the same PC does not consume an activation.
+6. The Upgrade screen, EULA and checkout copy mention no capability whose "Available in" milestone is after MVP
+   and list only A34 countries as supported.
 ```
 
 ---
@@ -2362,59 +2540,117 @@ ACCEPTANCE CRITERIA:
 3. FX example from §14.4 produces exactly the stated gain; revaluation reverses on day 1 of next period.
 ```
 
+### Phase 10b — Engineering tables, calculators & BoQ-lite · v1 (early; Starter)
+```text
+Read §§13.5 (arithmetic grammar), 15.9 (cumulative rule), 15.16–15.17, 9.2 L (eng_tables), 17.10.
+GOAL: Engineers and small contractors get useful tables and simple BoQ billing without the Pro projects module.
+BUILD: eng_tables with built-in JSON tables (rebar kg/m = d²/162, a steel-sections subset, densities, unit
+conversions, mix ratios, block/tile/paint coverage), every value marked "verify" with its source; Engineering
+tables screen and calculator side panel; safe functions (rebar_kg, lookup, area_circle, vol_cyl, conv) in the
+arithmetic parser; BoQ-lite quotes (1–2 levels, section subtotals, summary print); Accept → invoice, or
+percent-based PROGRESS_INVOICE with progress_pct_to_date per line (cumulative rule), optional retention %;
+banners, feature lists, F1 pages and registry rows.
+ACCEPTANCE CRITERIA:
+1. `=rebar_kg(12)*6*24` returns exactly 128 (12²/162 × 144, decimal math); lookup of an unknown row shows an
+   inline error; every built-in table shows its source and "verify".
+2. Three percent progress invoices against one BoQ-lite quote sum to the quote total at 100 %; over 100 % warns.
+3. Cell references are rejected (`=A1*2` → inline error); the parser survives 10 min of fuzzing without panics.
+```
+
 ### Phase 11 — BOM/recipes, assembly, comparisons & analytics · v1
 ```text
 Read §§9.2 G, 10.4, 10.10.
 BUILD: BOM editor (versions, waste, labour, overhead, sub-assemblies, cycle detection), cost roll-up in 4 modes
 at any date, ASSEMBLY document, "what-if" cost at two dates; Comparisons: price history (supplier/customer),
-margin by customer/item/category/period, cost drift alerts, supplier price comparison, BOM cost over time;
-dashboards with uPlot; all exportable to Excel.
+margin by customer/item/category/period, cost drift alerts, supplier price comparison, BOM cost over time — each
+as a report-catalog entry (§17.10); dashboards with uPlot (lazy-loaded); all exportable to Excel.
 ACCEPTANCE CRITERIA: cost roll-up golden tests (3-level BOM); assembly posts correct inventory/COGS; analytics
 queries on `large` fixture return ≤ 1 s (p95) with pagination.
 ```
 
 ### Phase 12 — Full Invoice Hub · v1
 ```text
-Read §§13 (all), 17.8, Appendix A.
+Read §§11.8, 13 (all), 17.8, 17.11, Appendix A.
 BUILD: PROFORMA, SALES_ORDER, DELIVERY_NOTE (with/without prices), DEPOSIT_INVOICE and "less advance" lines,
 DEBIT_NOTE; complete conversion graph incl. partial/merge with remaining quantities and fulfilment states;
 branches and per-branch series; recurring profiles with catch-up drafts; reminders (3 levels); email via SMTP
 (keychain secrets, outbox, templates per type/language); WhatsApp flow (PDF to clipboard + wa.me text);
-Quick sale mode (F12) with barcode wedge, tender/change, split payment; thermal ESC/POS raster printing
-(80/58 mm) with drawer kick; attachments; default notes/terms per type/party.
+Quick sale mode (F12) with barcode wedge, tender/change, split payment; cash sessions with X/Z reports and day
+close; F12 and drawer kick disabled when the pack's pos_fiscalization ≠ none; thermal ESC/POS raster printing
+(80/58 mm) with drawer kick; attachments; default notes/terms per type/party; message_templates; sent_at and
+sent_channel; installments UI (§13.13); Today panel items (low stock, cheques due in/out, installments due, open
+cash session); scheduled monthly statements (drafts → review → bulk send); barcode labels (§17.11); the hub's
+Sales/Purchases switch and universal New menu (§13.2).
 ACCEPTANCE CRITERIA:
 1. SO of 10 lines → 3 partial DNs → 1 merged invoice: remaining quantities correct at every step; voiding a DN
    restores remaining.
 2. Recurring: app closed for 40 days → on start, exactly the missed occurrences exist as drafts, no duplicates.
 3. Thermal receipt in Arabic prints correctly on an ESC/POS emulator (raster), width 576/384 dots.
 4. Email with PDF attachment sends through a test SMTP server; failures retry and surface in the outbox.
+5. A Z report's expected cash equals Σ cash movements of the session; the difference posts to 6900; a session left
+   open > 16 h shows in the Today panel.
+6. Installment balances sum to the invoice balance; aging by installment equals aging by invoice in total.
+7. EAN-13 and Code128 labels decode correctly (check-digit test) on A4 sheets and thermal raster.
+8. The New menu offers receipts, payment vouchers, expenses, letters and pay applications when their modules are
+   on; scheduled statements are never sent without review.
 ```
 
 ### Phase 13 — Full template designer, custom fields & fonts, direct print · v1
 ```text
-Read §17 (all), §16.4.
-BUILD: Designer UX per §17.4 (left structure panel, center live preview with click-to-select, right inspector,
-visibility rules), all fixes listed (per-element font size, custom TTF/OTF with subsetting, logo controls,
-first/other page headers, carried-forward subtotals, summary-only mode, line numbers), custom fields
-(document/line/party/item/project) that print, gallery to 8 templates, per-party/branch assignments,
-"Test with 60 lines", Advanced Typst override (Pro), Windows direct print to a named printer.
-ACCEPTANCE CRITERIA: a non-technical tester reproduces a given sample invoice layout in ≤ 15 minutes; custom
-line field appears in PDF and Excel; template versions immutable; preview ≤ 300 ms after edit.
+Read §17 (all), §16.4, Appendix I.
+BUILD: Designer UX per §17.4 (left structure panel, center live preview with click-to-select via hit boxes, right
+inspector, visibility-rule builder over the visible_if AST), all fixes listed (per-element font size, custom
+TTF/OTF with subsetting, logo controls, first/other page headers, carried-forward subtotals, summary-only mode,
+line numbers), any hex colour per element with print-contrast warning, per-template brand override, free
+elements, pre-printed paper mode with per-printer calibration, cheque template, .adtemplate export/import, custom
+fields (document/line/party/item/project) that print, gallery to 10 templates, per-party/branch assignments,
+"Test with 60 lines", Advanced Typst override (Pro), Windows direct print to a named printer; report builder Pro
+features (grouping ≤ 2 levels, bar/line charts, branded report headers) and the remaining catalog reports.
+ACCEPTANCE CRITERIA:
+1. HUMAN GATE: a non-technical tester reproduces a given sample invoice layout in ≤ 15 minutes. Agent-checkable
+   proxy: an E2E script reproduces it through the designer UI only, and every designer control is
+   keyboard-reachable.
+2. A custom line field appears in PDF and Excel; template versions are immutable; preview ≤ 300 ms after edit.
+3. A free element dragged to a new position prints there (PDF coordinates ±0.5 mm); pre-printed mode prints only
+   field values, shifted by the printer's calibration offset.
+4. Any hex colour can be set per element and low contrast warns; a per-template brand override does not change
+   other templates.
+5. The cheque template prints amount in figures and words that match (golden tests).
+6. Exporting a template to .adtemplate and importing it creates a new template that renders an identical PDF.
+7. Report layouts with grouping and charts persist across restarts; branded report PDFs; PDF totals = XLSX totals.
+8. A custom TTF/OTF upload is subset and embedded, and a license reminder is shown.
 ```
 
 ### Phase 14 — Country packs, VAT return, validator, e-invoice export, ZATCA QR · v1
 ```text
-Read §11 entirely, §26 A9–A10, A19.
-BUILD: signed country packs (launch set §11.2, all `verified:false` until reviewed; IQ placeholder), pack import/
-update UI, per-country setup warnings, pre-issue validator rules from packs, withholding certificates and
-statement clearing, tax periods (open/filed/locked), VAT return builder (invoice & cash basis, UAE emirate split,
-drill-down, Excel export), purchase-bill tax override, optional VIES/HMRC checks on demand, e-invoice export
-(UBL Peppol BIS 3.0, CII, Factur-X/ZUGFeRD EN16931 PDF/A-3, XRechnung) + import of incoming XRechnung/ZUGFeRD,
-ZATCA Phase-1 TLV QR on KSA documents.
-ACCEPTANCE CRITERIA: KoSIT and Peppol schematron validation pass on 20 sample invoices incl. credit notes,
-allowances and mixed rates; veraPDF passes PDF/A-3; ZATCA QR decodes to the 5 fields (and passes the ZATCA SDK
-check where available); VAT return totals equal Σ document summaries (property test); unverified packs show the
-yellow badge.
+Read §11 entirely, §26 A9–A10, A19, A34, Appendix C.
+BUILD: signed country packs (launch set §11.2, all `verified:false` until reviewed — with source_url/verified_by/
+verified_at enforced for verified packs; IQ placeholder; KW/QA without VAT; EG/TR/MY/JO/IN-above-threshold as
+ctc_online_required), pack fields (calc_decimals, cash_rounding_increment, tax_point_rule, tax_fx_rule,
+tax_on_advances, registration threshold, pos_fiscalization), pack import/update UI, per-country setup warnings,
+KSA integration-date question and block, pre-issue validator rules from packs (incl. Australia buyer.name_or_abn,
+line-mode export warning, forced category mode for export/peppol_id), withholding certificates and statement
+clearing, tax periods (open/filed/locked), VAT return builder (invoice basis by tax_point_date & cash basis, UAE
+emirate split, drill-down, Excel export; never files, no "MTD compatible" claim), purchase-bill tax override,
+non-recoverable input tax, optional VIES/HMRC checks on demand, e-invoice export (UBL Peppol BIS 3.0, CII,
+Factur-X/ZUGFeRD EN16931 PDF/A-3, XRechnung) with uoms.export_code + import of incoming XRechnung/ZUGFeRD, ZATCA
+Phase-1 TLV QR on KSA documents.
+ACCEPTANCE CRITERIA:
+1. KoSIT and Peppol schematron validation pass on 20 sample invoices incl. credit notes, allowances and mixed
+   rates, with valid unit export codes.
+2. veraPDF passes PDF/A-3.
+3. ZATCA QR decodes to the 5 fields (and passes the ZATCA SDK check where available); a KSA business past its
+   integration date without the add-on cannot issue tax invoices.
+4. VAT return totals equal Σ document summaries assigned by tax_point_date (property test); unverified packs show
+   the yellow badge.
+5. A pack claiming verified:true without source_url/verified_by/verified_at is rejected; KW/QA packs contain no
+   VAT rates; EG/TR/MY/JO/IN (above threshold) block titled tax invoices.
+6. The Australian rule accepts buyer name or ABN; exporting a line-mode document warns; category mode is forced
+   for parties with a peppol_id.
+7. Non-recoverable input tax posts to the expense/asset account; "less advance" golden tests pass with
+   tax_on_advances true and false.
+8. pos_fiscalization ≠ none disables F12 and the drawer kick with an explanation.
+9. No UI text, document or EULA claims "MTD compatible" or automatic filing (copy scan test).
 ```
 
 ### Phase 15 — Bank reconciliation, accountant export, period lock · v1
@@ -2422,37 +2658,48 @@ yellow badge.
 Read §§9.2 K, 14.7, 14.9.
 BUILD: import profiles and parsers (CSV wizard, OFX/QFX, QIF, CAMT.053, MT940; permissive implementations),
 dedupe, matching suggestions (a)–(e), rules, reconciliation sessions with Finish-at-zero, accountant export pack
-(XLSX + CSV BOM + Xero/QBO/IIF after verifying templates, A17), account mapping per accountant, lock period.
-ACCEPTANCE CRITERIA: re-importing the same file yields 0 new lines; a 1,000-line statement reconciles with ≥ 80 %
-one-click suggestions on the demo dataset; fuzzers run 10 min without panics; GL export ties to trial balance.
+(XLSX + CSV BOM + Xero/QBO/IIF after verifying templates, A17), account mapping per accountant, lock period;
+anonymization of archived persons/parties after retention (§21.3).
+ACCEPTANCE CRITERIA:
+1. Re-importing the same file yields 0 new lines.
+2. A 1,000-line statement reconciles with ≥ 80 % one-click suggestions on the demo dataset.
+3. Fuzzers run 10 min without panics.
+4. GL export ties to the trial balance.
+5. Anonymization replaces personal data after the retention period, keeps legally required document snapshots,
+   never runs when retention_years is null, and is audited.
 ```
 
 ### Phase 16 — Official letters & documents catalog · v1
 ```text
-Read §16 entirely.
-BUILD: people table and minimal HR data screen; letter registers (outgoing/incoming) with automatic numbering;
-the ~40 templates of §16.1 (bilingual, RTL), placeholders, stamp/signature, Hijri dates, amount in words;
-letter editor (structured fields + rich-but-safe text), issue → immutable + hash, search, PDF archive,
-Excel register export.
-ACCEPTANCE CRITERIA: each template renders in ar and en without overflow; register numbers are gapless per year;
-issued letters cannot be edited; salary certificate pulls person data and prints salary in words correctly.
+Read §16 entirely, §21.3.
+BUILD: extends Letters-lite (Phase 8b): HR data screen for people (owner/manager only); signers management; the
+remaining ~32 templates of §16.1 (bilingual, RTL) with their fields_json; placeholders, stamp/signature behind
+letters.issue_with_stamp, Hijri dates, amount in words; cc and attachments lists; full search; PDF archive.
+ACCEPTANCE CRITERIA:
+1. Each template renders in ar and en without overflow.
+2. Register numbers are gapless per year.
+3. Issued letters cannot be edited; issuing with stamp needs the permission and is audited.
+4. The salary certificate pulls person data and prints the salary in words correctly; people data is invisible to
+   roles other than owner and manager.
 ```
 
 ### Phase 17 — Projects & contracting core · v1
 ```text
-Read §15 (15.1–15.12, 15.14–15.15), §9.2 L, Appendix E (progress billing). Resolve A15–A16 first (interviews).
-BUILD: Projects module toggle; projects list/dashboard with chain breadcrumb; BoQ editor (tree grid, keyboard,
-safe arithmetic, classification pick-lists), rate build-up library linked to inventory costs, versions + diff,
+Read §15 (15.1–15.12, 15.14–15.17), §9.2 L, Appendix E (progress billing). Resolve A15–A16 first (interviews).
+BUILD: Projects module toggle; projects list/dashboard with chain breadcrumb; projects.tax_profile values (§15.10);
+BoQ editor building on BoQ-lite (tree grid, keyboard, safe arithmetic + engineering functions, no cell references,
+classification pick-lists), BoQ-lite quote → project conversion, rate build-up library linked to inventory costs, versions + diff,
 quotation from tender BoQ, Accept → contract lock → SoV, variations register, payment applications (percent and
 quantity modes, cumulative rule, certification, lock), deductions engine with presets, PROGRESS_INVOICE and
-RETENTION_INVOICE generation and postings, client-BoQ import & "return in the same layout", project workbook,
-print templates (§15.14).
+RETENTION_INVOICE generation and postings, client-BoQ import & "return in the same layout" via the zip-level
+patch (§15.12; .xls/.ods refused), project workbook in the customer folder, print templates (§15.14).
 ACCEPTANCE CRITERIA:
 1. Cumulative rule tests: corrections only in the next app; "this period" always = to-date − previous certified.
 2. Five consecutive apps with retention (cap reached in app 4), advance recovery and one approved VO reconcile
    to the customer statement and AR exactly.
 3. A client BoQ xlsx (merged cells, section rows, Arabic text) is imported, priced and exported back with only
-   the rate/amount columns changed (cell-level diff test against the original).
+   the rate/amount cells changed (cell-level diff test against the original; every other zip part byte-identical;
+   calcChain removed; Excel opens it without a repair prompt).
 4. Module off → no projects UI, tables untouched, no project sheets in Excel.
 ```
 
@@ -2461,7 +2708,8 @@ ACCEPTANCE CRITERIA:
 ### Phase 18 — Projects advanced · v2
 ```text
 Read §15.4, §15.13.
-BUILD: takeoff side panel (dimension rows, deductions, waste, CSV/XLSX quantity import), subcontract packages with
+BUILD: takeoff side panel (dimension rows, deductions, waste, §15.16 functions in formulas, CSV/XLSX quantity
+import), subcontract packages with
 inbound applications/retention/back-charges/expiry alerts, cost vs budget, cash-flow forecast and S-curves
 (planned/certified/actual, cash-in lag, funding gap), material schedules → purchase requisitions, stock issue to
 project.
@@ -2481,14 +2729,16 @@ flagged when DB changed after export; posted documents can never be changed via 
 
 ### Phase 20 — E-invoicing connectors add-on (ZATCA Phase 2 first) · v2
 ```text
-Read §11.7. Requires a separate paid add-on license flag.
+Read §11.7, §5.2 (d). Requires a separate paid add-on license flag; ships as a separate, signed, downloadable
+add-on (never in the base installer).
 BUILD: einvoice_submissions outbox with deadlines; ZATCA onboarding (CSR, OTP, compliance CSID, production CSID)
 per EGS unit; UBL 2.1 with ICV/PIH, canonicalization + SHA-256, XAdES ECDSA secp256k1 signing, TLV QR tags 1–9;
 B2C simplified: sign locally, print offline, report ≤ 24 h with alerts; B2B standard: block Issue until clearance
 with clear "internet needed" UX; CI validation with the official ZATCA SDK. Then design the Peppol access-point
 partner integration (ADR only).
 ACCEPTANCE CRITERIA: ZATCA SDK compliance checks pass for standard, simplified, credit and debit notes; offline
-simplified invoices queue and report automatically when online; ICV never resets (test across restore).
+simplified invoices queue and report automatically when online; ICV never resets or repeats (high-water mark,
+§10.5; test across restore).
 ```
 
 ### Phase 21 — macOS release, accessibility & hardening · v2
@@ -2508,17 +2758,20 @@ no high/critical findings open.
 ### 28.1 Per feature / per phase
 - [ ] Acceptance criteria of the phase all demonstrably pass (automated where possible; manual steps in `docs/demos/phase-N.md`).
 - [ ] Unit, property, golden and integration tests added; CI green on Windows.
-- [ ] Works fully offline (tested with network disabled).
+- [ ] Core features work offline (tested with network disabled); only the legally required online flows of the e-invoicing add-on need a network.
 - [ ] Performance budgets (§3.2) measured and recorded in `docs/PERF.md`; no hard limit breached.
 - [ ] Installer size checked; dependency licenses checked (Appendix G); `docs/DEPENDENCIES.md` updated.
-- [ ] Every new screen has: ar/en banner copy, empty state, F1 help page, task hints (if a task starts there), keyboard paths, command-palette entries.
+- [ ] Every new screen has its Appendix H registry row: ar/en banner copy, complete `features` list, empty state, F1 help page, task hints with start and completion emitters (if a task starts there), keyboard paths, command-palette entries. Dialogs/wizards have their one-line subtitle.
+- [ ] Appendix K traceability rows touched by the phase carry acceptance-test ids; `check-traceability` passes.
+- [ ] HUMAN GATE criteria are marked "pending human" and their agent-checkable proxies pass.
+- [ ] `docs/SIZE.md` updated; installer growth ≤ 300 KB or an ADR.
 - [ ] RTL and LTR screenshots reviewed; light/dark/black and comfortable/compact checked.
 - [ ] WCAG 2.2 AA basics: focus visible and not obscured, targets ≥ 24 px, contrast AA, labels for inputs.
-- [ ] All user-facing strings in catalogs (no hard-coded text); Arabic written natively.
+- [ ] All user-facing strings in catalogs (no hard-coded text); Arabic written natively in Modern Standard Arabic (dialect only in the optional overlay).
 - [ ] Money math only in Rust core with integer minor units/decimals; no floats in financial paths.
-- [ ] Every mutation writes audit rows and (where relevant) `export_outbox` rows in the same transaction.
+- [ ] Every mutation writes audit rows in the same transaction, and the CI registry test proves that every mutating command queues ≥ 1 `export_outbox` target in the same transaction or carries `#[no_excel(reason)]`; drafts never queue.
 - [ ] Issued documents immutable; corrections via void/credit/debit notes only.
-- [ ] Owner-only data never reaches prints, customer exports or non-owner roles (test).
+- [ ] Owner-only data never reaches prints, customer exports, non-owner roles or the Excel mirror (test).
 - [ ] Errors are localized, actionable, and logged locally without sensitive data.
 - [ ] Migrations forward-only, tested from every previous released schema; pre-migration backup verified.
 - [ ] No forced change to existing templates, saved views, shortcuts or numbering output.
@@ -2526,7 +2779,7 @@ no high/critical findings open.
 
 ### 28.2 Per release (additionally)
 - [ ] Clean-VM install (Windows 10 22H2, 4 GB, no admin) and upgrade from the previous release with the `large` fixture.
-- [ ] Cold start, idle memory, peak memory, installer size within budgets on Ref-Low.
+- [ ] Cold start, idle memory, peak memory, installer size within budgets on Ref-Low; cold start gate met on Ref-HDD.
 - [ ] Backup → restore round trip verified; Excel "Rebuild all" verified; integrity check passes on fixtures.
 - [ ] Excel lock matrix (§12.11) passes.
 - [ ] Signed installer, signed update manifest, signed country packs; signatures verified on a clean machine.
@@ -2555,15 +2808,16 @@ no high/critical findings open.
 | Forms | Esc | Cancel / close popover |
 | Pickers | Alt+C | Create new customer/item/etc. inline from the field |
 | Pickers | Ctrl+Space | Open search popup |
-| Document editor | Ctrl+Enter or F10 | Issue / post |
-| Document editor | Ctrl+P | Issue & print / preview |
+| Document editor | F10 | Issue / post (always through the confirmation dialog, §19.7) |
+| Document editor | Ctrl+Shift+F10 | Issue & print (same confirmation) |
+| Document editor | Ctrl+P | Print / preview the current state (DRAFT watermark on drafts; never issues) |
 | Document editor | Ctrl+Shift+C | Convert to… |
 | Document editor | F9 | Toggle owner margin column (PIN) |
 | Document editor | F12 | Quick sale mode |
 | Line grid | Arrow keys | Move between cells |
 | Line grid | Enter | Next cell (or down, per user setting); wraps to a new line after last column |
 | Line grid | F2 | Edit cell |
-| Line grid | Ins or Ctrl+Enter (in grid) | Insert line |
+| Line grid | Ins or Ctrl+Enter | Insert line (Ctrl+Enter never issues) |
 | Line grid | Ctrl+D | Duplicate line |
 | Line grid | Ctrl+Delete | Delete line |
 | Line grid | Alt+↑ / Alt+↓ | Move line up/down |
@@ -2573,28 +2827,39 @@ no high/critical findings open.
 | BoQ editor | Ctrl+Shift+Ins | New section |
 | Hub | Ctrl+N | New document (type menu) |
 | Hub | Ctrl+M | Mark selected as paid (opens confirm with undo) |
-| Help | (i) button / Shift+F1 | Reopen this screen's banner |
+| Accounts, items, parties (lists and detail) | Ctrl+L | Open the Card (account / item / party ledger card, §14.10) |
+| Help | (i) button / Shift+F1 | Reopen this screen's banner with "All features on this screen" expanded |
 
-Note: when Enter is configured to move down, Ctrl+Enter inside the grid inserts a line and Issue moves to F10 only (resolve conflict in the shortcut registry; ADR).
+Notes:
+1. Shortcuts are bound by physical key (`KeyboardEvent.code`); the labels above are for a US layout, and menus/tooltips show the label of the active layout (§3.5).
+2. Issuing is irreversible, so it has no Ctrl+Enter or Ctrl+P binding. Ctrl+Shift+P stays the command palette, which is why "Issue & print" is Ctrl+Shift+F10.
+3. Browser accelerators (F5, Ctrl+R, Chromium Ctrl+P / Ctrl+F, zoom) are disabled in WebView2 (§6); the app's own bindings above apply.
 
 ---
 
 ## Appendix B — Hint copy examples (EN / AR)
 
+All Arabic copy is Modern Standard Arabic (A30). Regional dialect, if ever wanted, goes only into an optional UI overlay such as `ar-IQ.json`, never into `ar.json` or printed documents.
+
 | hint_id | Title | Body |
 |---|---|---|
-| task.invoice.create.paste | Paste lines from Excel / الصق الأسطر من إكسل | Copy rows (item, qty, price) in Excel and press Ctrl+V in the lines grid. / انسخ الصفوف (المادة، الكمية، السعر) من إكسل واضغط Ctrl+V بجدول الأسطر. |
-| task.invoice.issue | Numbers are final / الرقم نهائي | After Issue the invoice gets its number and can only be corrected by a credit note. / بعد الإصدار تاخذ الفاتورة رقمها وتصحيحها يكون بإشعار دائن فقط. |
-| task.invoice.newitem | Create items inline / أنشئ مادة من هنا | Type a new name and press Alt+C to add it without leaving the invoice. / اكتب اسم جديد واضغط Alt+C حتى تضيفه بدون ما تطلع من الفاتورة. |
-| task.payment.receive | One payment, many invoices / دفعة وحدة لعدة فواتير | Enter the amount; we fill the oldest invoices first. Extra money stays as credit. / اكتب المبلغ؛ نسدد الأقدم أولاً، والزيادة تبقى رصيد للزبون. |
-| task.void_vs_credit | Void or credit note? / إلغاء أو إشعار دائن؟ | Void only unpaid mistakes in an open period; otherwise create a credit note. / الإلغاء بس لغلطة غير مدفوعة بفترة مفتوحة؛ غير هيج سوّي إشعار دائن. |
-| task.price.dated | Prices from a date / سعر من تاريخ | New prices apply from the date you choose; old invoices never change. / السعر الجديد يسري من التاريخ اللي تختاره؛ الفواتير القديمة ما تتغير. |
-| task.excel.locked | Excel file is open / ملف إكسل مفتوح | Close it in Excel and it updates automatically. Nothing is lost. / سكّره بإكسل ويتحدث تلقائياً. ما ضاع شي. |
-| task.template.edit | See the real PDF / شوف الـPDF الحقيقي | The preview is the final PDF. Try "Test with 60 lines" before printing. / المعاينة هي الـPDF النهائي. جرّب "60 سطر" قبل الطباعة. |
-| task.boq.paste | Paste your BoQ / الصق جدول الكميات | Paste rows from Excel; indented rows become sections. / الصق الصفوف من إكسل؛ الصفوف المزاحة تصير أقسام. |
-| task.payapp.cumulative | Enter totals to date / اكتب المنجز لحد الآن | Type the quantity or % done to date; this period is calculated for you. / اكتب الكمية أو النسبة المنجزة لحد الآن؛ هالفترة تنحسب تلقائياً. |
-| setup.fx.missing | Exchange rate missing / سعر الصرف ناقص | Add today's USD rate so totals in IQD are correct. / ضيف سعر الدولار لليوم حتى المجاميع بالدينار تكون صحيحة. |
-| setup.backup.old | Backup is old / النسخة الاحتياطية قديمة | Last backup was 9 days ago. Back up now. / آخر نسخة قبل 9 أيام. سوّي نسخة هسه. |
+| task.invoice.create.paste | Paste lines from Excel / الصق الأسطر من إكسل | Copy rows (item, qty, price) in Excel and press Ctrl+V in the lines grid. / انسخ الصفوف (الصنف، الكمية، السعر) من إكسل، ثم اضغط Ctrl+V في جدول الأسطر. |
+| task.invoice.issue | Numbers are final / الرقم نهائي | After Issue the invoice gets its number and can only be corrected by a credit note. / بعد الإصدار تأخذ الفاتورة رقمها النهائي، ولا تُصحَّح إلا بإشعار دائن. |
+| task.invoice.correct | Credit + corrected copy / إشعار دائن ونسخة مصححة | We cancel the invoice with a credit note and open a corrected copy for you to issue. / نلغي الفاتورة بإشعار دائن ونفتح لك نسخة مصححة لتصدرها. |
+| task.invoice.newitem | Create items inline / أنشئ صنفاً من هنا | Type a new name and press Alt+C to add it without leaving the invoice. / اكتب اسماً جديداً واضغط Alt+C لإضافته دون مغادرة الفاتورة. |
+| task.payment.receive | One payment, many invoices / دفعة واحدة لعدة فواتير | Enter the amount; we fill the oldest invoices first. Extra money stays as credit. / أدخل المبلغ؛ نسدّد الفواتير الأقدم أولاً، ويبقى الفائض رصيداً للزبون. |
+| task.void_vs_credit | Void or credit note? / إلغاء أم إشعار دائن؟ | Void only unpaid mistakes in an open period; otherwise create a credit note. / الإلغاء فقط لخطأ غير مدفوع في فترة مفتوحة؛ وفي غير ذلك أنشئ إشعاراً دائناً. |
+| task.price.dated | Prices from a date / سعر ابتداءً من تاريخ | New prices apply from the date you choose; old invoices never change. / يسري السعر الجديد من التاريخ الذي تختاره، ولا تتغير الفواتير السابقة. |
+| task.excel.locked | Excel file is open / ملف إكسل مفتوح | Close it in Excel and it updates automatically. Nothing is lost. / أغلق الملف في إكسل وسيُحدَّث تلقائياً. لم يُفقد شيء. |
+| task.template.edit | See the real PDF / عاين ملف PDF الحقيقي | The preview is the final PDF. Try "Test with 60 lines" before printing. / المعاينة هي ملف PDF النهائي. جرّب «اختبار بـ60 سطراً» قبل الطباعة. |
+| task.report.layout | Save your layout / احفظ تخطيطك | Pick columns, sort and filter, then save it as your layout. / اختر الأعمدة والفرز والتصفية، ثم احفظها تخطيطاً خاصاً بك. |
+| task.boq.paste | Paste your BoQ / الصق جدول الكميات | Paste rows from Excel; indented rows become sections. / الصق الصفوف من إكسل؛ تتحول الصفوف المُزاحة إلى أقسام. |
+| task.payapp.cumulative | Enter totals to date / أدخل المنجز حتى الآن | Type the quantity or % done to date; this period is calculated for you. / أدخل الكمية أو النسبة المنجزة حتى الآن، وتُحسب قيمة هذه الفترة تلقائياً. |
+| task.letter.issue | Numbered on issue / يُرقَّم الكتاب عند الإصدار | The letter gets its number and date from the register when you issue it. / يأخذ الكتاب عدده وتاريخه من السجل عند إصداره. |
+| setup.fx.missing | Exchange rate missing / سعر الصرف غير موجود | Add today's USD rate so totals in IQD are correct. / أضف سعر الدولار لهذا اليوم لتكون المجاميع بالدينار صحيحة. |
+| setup.backup.old | Backup is old / النسخة الاحتياطية قديمة | Last backup was 9 days ago. Back up now. / آخر نسخة احتياطية قبل 9 أيام. أنشئ نسخة الآن. |
+| toast.task.complete | Done / تم | Done — INV-2026-00042 issued · Don't show this tip again / تم — صدرت الفاتورة INV-2026-00042 · لا تُظهر هذه النصيحة مرة أخرى |
+| feature line (banner expander) | Convert to the next step / التحويل إلى الخطوة التالية | Turn a quote into an order or invoice, copying only what is left. Ctrl+Shift+C / حوّل عرض السعر إلى طلب أو فاتورة بنسخ الكميات المتبقية فقط. Ctrl+Shift+C |
 
 ---
 
@@ -2604,7 +2869,7 @@ Note: when Enter is configured to move down, Ctrl+Enter inside the grid inserts 
 ```json
 {
   "country": "IQ", "version": "2026.11.0-placeholder", "valid_from": "2026-01-01",
-  "currency": { "code": "IQD", "display_decimals": 0 },
+  "currency": { "code": "IQD", "calc_decimals": 0, "display_decimals": 0, "cash_rounding_increment": null },
   "default_price_mode": { "b2c": "incl", "b2b": "excl" },
   "rounding": { "mode": "category", "method": "half_up" },
   "categories_used": ["S","Z","E","O"],
@@ -2614,7 +2879,12 @@ Note: when Enter is configured to move down, Ctrl+Enter inside the grid inserts 
                        "CASH_SALE": { "ar": "وصل بيع", "en": "Sales receipt" } },
   "required_fields": { "INVOICE": ["number","doc_date","seller.name","buyer.name","lines","totals"] },
   "numbering": { "gapless": true, "reset": "yearly" },
-  "retention_years": 10,
+  "retention_years": null,
+  "registration": { "threshold": null, "currency": "IQD", "source_url": null },
+  "tax_point_rule": "supply_date_else_doc_date",
+  "tax_fx_rule": { "basis": null, "allowed_sources": ["central_bank", "manual"], "source_url": null },
+  "tax_on_advances": null,
+  "pos_fiscalization": "none",
   "language_rules": { "required": [], "optional": ["ar","en"] },
   "qr": { "type": "none" },
   "einvoicing": { "status": "none", "notes": { "en": "Not researched. Verify current Iraqi requirements with an accountant.", "ar": "لم يُبحث بعد. تأكد من المتطلبات العراقية الحالية مع محاسب." } },
@@ -2623,25 +2893,46 @@ Note: when Enter is configured to move down, Ctrl+Enter inside the grid inserts 
 }
 ```
 
-**C.2 Pack validation rules (core MUST enforce on import):** valid signature (release builds); semantic version; no rate without `valid_from`; category codes ∈ UNCL5305 set; every `required_fields` path known to the validator; titles present for all enabled document types in at least one language.
+**C.2 Pack validation rules (core MUST enforce on import):** valid signature (release builds); semantic version; no rate without `valid_from`; category codes ∈ UNCL5305 set; every `required_fields` path known to the validator; titles present for all enabled document types in at least one language; `calc_decimals ≤` the ISO exponent; `tax_fx_rule`, `tax_point_rule`, `pos_fiscalization` and `einvoicing.status` present; a pack with `verified: true` is rejected unless **every** rate, threshold and return box carries `source_url`, `verified_by` and `verified_at`; packs for countries without VAT (e.g. KW, QA — verify) contain no `vat` rates.
+
+**C.3 Sale-status index (`assets/country-packs/index.json`, A34):** `[{ "country": "IQ", "pack_version": "…", "sale_status": "supported" | "limited" | "not_supported", "note": { "ar": "…", "en": "…" } }]` — drives checkout copy, the EULA coverage statement and the setup wizard.
 
 ---
 
 ## Appendix D — Domain events → outbox targets
 
-| Event | Excel targets enqueued | Other reactions |
+**Generated, not hand-written:** `scripts/gen-appendix-d.rs` renders this table from the command registry (§12.2) into `docs/APPENDIX_D.md`; the copy below is the initial design. CI fails if the generated table differs from the committed one, or if a mutating command has neither targets nor `#[no_excel(reason)]`. "activity" = `report:activity:<yyyy-mm>`, enqueued by every row below except the `#[no_excel]` rows.
+
+| Event (mutating command) | Excel targets enqueued | Other reactions |
 |---|---|---|
-| `party.created/updated/archived` | `customer:<uid>` or `supplier:<uid>`, `report:customers`/`report:suppliers` | file rename if name changed |
-| `price.changed` | `customer:<uid>` (party scope) or all customers using the list (debounced), `report:items` | impact preview cache invalidated |
-| `document.issued` (sale) | `customer:<uid>`, `report:sales:<yyyy>`, `report:vat:<period>`, `report:customers` | PDF render; email/WhatsApp if requested |
-| `document.issued` (purchase) | `supplier:<uid>`, `report:purchases:<yyyy>`, `report:vat:<period>`, `report:suppliers` | stock/cost updates |
-| `document.voided` / `credit_note.issued` | same as issued for that party | reversing journal |
-| `payment.posted/voided`, `allocation.changed` | party workbook, `report:payments:<yyyy>`, `report:customers`/`suppliers` | balance caches |
-| `stock.moved` | `report:items` (debounced 60 s) | recost job if back-dated |
-| `project.*` (apps, VOs, BoQ lock) | `project:<uid>`, customer workbook | progress invoice creation |
-| `tax_period.filed` | `report:vat:<period>` | lock period edits |
-| `brand.changed` | all workbooks (low priority, batched) | — |
-| `settings.excel_root_changed` | full rebuild (user-confirmed) | — |
+| `party.created/updated/archived` | `customer:<uid>` or `supplier:<uid>` (skipped when `excel_mirror = 0`), `report:customers` / `report:suppliers`, activity | folder/file rename if name changed (issued rows keep snapshots) |
+| `price.changed` (party scope) | `customer:<uid>`, `report:items`, activity | impact preview cache invalidated |
+| `price.changed` (price-list or `all` scope) | `report:items`, activity; affected customer workbooks marked **stale** (lazy, §12.3) | — |
+| `document.issued` (sale invoice, cash sale, notes, progress/retention invoices) | `customer:<uid>` (or `report:cashsales:<yyyy-mm>` when `excel_mirror = 0`), `report:sales:<yyyy-mm>`, `report:sales_summary:<yyyy>` (idle), `report:vat:<period by tax_point_date>`, `report:customers`, activity | PDF render; PDF linked/copied into the customer's `Invoices\` folder; email/WhatsApp if requested |
+| `document.issued` (quote, proforma, order, delivery note) | `customer:<uid>` (Quotes/Orders sheets), activity | — |
+| `document.issued` (PO, goods receipt, bill, supplier credit) | `supplier:<uid>`, `report:purchases:<yyyy-mm>`, `report:vat:<period>`, `report:suppliers`, activity | stock/cost updates |
+| `document.issued` (EXPENSE) / `expense.quick_posted` | `report:expenses:<yyyy>`, `report:cashbank:<yyyy>`, activity (+ supplier workbook if a supplier is set) | — |
+| `document.voided` / `credit_note.issued` / `debit_note.issued` | same targets as the original's issue, for the void/note month | reversing journal |
+| `document.sent` | party workbook (Sent column), activity | — |
+| `payment.posted/voided`, `allocation.changed` | party workbook, `report:payments:<yyyy-mm>`, `report:cashbank:<yyyy>`, `report:customers` / `report:suppliers`, activity | balance caches |
+| `transfer.posted`, `pettycash.topped_up/counted`, `owner.drawing_posted/capital_posted` | `report:cashbank:<yyyy>`, activity | — |
+| `cheque.status_changed` | party workbook, `report:cashbank:<yyyy>`, activity | allocation reversed on a bounced incoming cheque |
+| `bank_rec.finished` | `report:cashbank:<yyyy>` (Reconciliations sheet), activity | — |
+| `cash_session.opened/closed` | `report:cashsales:<yyyy-mm>`, `report:cashbank:<yyyy>`, activity | X/Z report |
+| `stock.moved` (receipt, issue, adjustment, transfer, assembly) | `report:stockmoves:<yyyy-mm>` (debounced ≥ 60 s), `report:items`, activity | recost job if back-dated |
+| `landed_cost.applied/reversed` | `report:stockmoves:<yyyy-mm>`, `supplier:<uid>`, activity | cost adjustments |
+| `bom.saved` | `report:items` (BOMs sheet), activity | — |
+| `fx_rate.saved` | `report:items` (FX rates sheet), activity | — |
+| `journal.posted` (any source) | `report:ledger:<yyyy-mm>` | — |
+| `letter.issued/received/voided` | `report:letters:<yyyy>`, activity | PDF archive |
+| `statement.generated` | party `Statements\` folder copy, activity | `statement_runs` snapshot |
+| `project.*` (pay apps, VOs, BoQ lock) | `project:<uid>`, `customer:<uid>`, activity | progress invoice creation |
+| `tax_period.filed` | `report:vat:<period>`, activity | lock period edits |
+| `settings.changed`, `member.*`, `template.saved`, `numbering.hwm_restore` | activity only (settings and users are not mirrored as data) | — |
+| `brand.changed` | **all** workbooks marked stale (idle worker, progress) | — |
+| `settings.excel_root_changed` / `excel.layout_changed` | all workbooks marked stale; user-confirmed lazy rebuild with progress | the old root is left untouched |
+| `document.draft_saved` (autosave) | `#[no_excel("draft")]` | `editor_autosave` |
+| `report_layout.saved`, `ui_prefs.changed`, `hint_state.changed` | `#[no_excel("view preference")]` | — |
 
 ---
 
@@ -2649,7 +2940,7 @@ Note: when Enter is configured to move down, Ctrl+Enter inside the grid inserts 
 
 | Source | Debit | Credit |
 |---|---|---|
-| Invoice (sale) | 1100 AR (payable − retention) · 1110 Retention (if any) · 1160 WHT receivable (if withheld by customer, ASSUMPTION) | 4000/4100 Sales (net) · 2100 Tax |
+| Invoice (sale) | 1100 AR (payable − retention) · 1110 Retention (if any) · 1160 WHT receivable (if withheld by customer, ASSUMPTION) | income account per §10.6 (item account, else 4100 for services/labour, else 4000) (net) · 2100 Tax |
 | Cash sale | Payment account (− fee) · 6100 Fee | 4000 Sales · 2100 Tax |
 | COGS on issue (stock items) | 5000 COGS | 1200 Inventory |
 | Credit note (sale) | 4000 Sales · 2100 Tax | 1100 AR (or 2200 if already paid → credit) |
@@ -2660,11 +2951,11 @@ Note: when Enter is configured to move down, Ctrl+Enter inside the grid inserts 
 | Refund to customer | 2200 (or 1100) | Payment account |
 | Deposit invoice (if tax due on advances) | 1100 | 2200 · 2100 Tax |
 | Final invoice "less advance" line | 2200 (advance net) · 2100 (advance tax reversal) | 1100 |
-| Supplier bill (stock) | 1200 Inventory · 1300 Input tax | 2000 AP |
-| Supplier bill (expense) | 6xxx Expense · 1300 Input tax | 2000 AP |
+| Supplier bill (stock) | 1200 Inventory (incl. the non-recoverable share of tax) · 1300 Input tax (recoverable share) | 2000 AP |
+| Supplier bill (expense) | 6xxx Expense from the line's `account_code` (incl. the non-recoverable share of tax) · 1300 Input tax (recoverable share) | 2000 AP |
 | Pay supplier bill | 2000 AP · 6100 Fee · 4950 (FX loss) | Payment account · 4950 (FX gain) |
 | Advance to supplier | 1150 | Payment account |
-| Quick expense | 6xxx · 1300 | Payment account |
+| Quick expense | 6xxx (incl. non-recoverable tax) · 1300 (recoverable tax) | Payment account |
 | Landed cost voucher | 1200 Inventory (remaining qty share) · 5100 Cost adjustments (consumed share) | 2000 AP (freight/customs bill) |
 | Processor payout / cash deposit (transfer) | 1020 Bank | 1030 Processor / 1000 Cash drawer |
 | Cross-currency transfer | Destination account (to amount) · 4950 (loss) | Source account (from amount) · 4950 (gain) |
@@ -2675,12 +2966,16 @@ Note: when Enter is configured to move down, Ctrl+Enter inside the grid inserts 
 | Opening supplier balance | 3900 | 2000 (per party) |
 | Opening stock | 1200 | 3900 |
 | Stock adjustment (loss) | 5100 Cost adjustments | 1200 |
+| Stock adjustment (gain) | 1200 | 5100 Cost adjustments |
+| Cash session close (Z) difference | 6900 (shortage) / drawer account (surplus) | drawer account / 6900 |
+| Receipt / payment voucher (سند قبض / سند صرف) | as "Receipt allocated" / "Pay supplier bill" or the chosen account | — |
 | Assembly | 1200 (output) | 1200 (components) · labour/overhead absorption account (ASSUMPTION: 5100) |
 | Progress invoice | 1100 (net due + tax) · 1110 (retention this period) · 2200 (advance recovery) | 4000/4100 (gross this period) · 2100 Tax |
 | Retention release invoice | 1100 | 1110 (· 2100 if tax due at release — pack setting) |
 | Bounced cheque | 1100 AR | Payment account (bank) — and allocation reversed |
 | Realized FX on allocation | see receipt / bill payment rows | |
 | Period-end revaluation (Pro, optional) | 1100/2000 or 4950 | 4950 or 1100/2000 — reversed on day 1 of next period |
+| Year-end | nothing posted: 3200 Retained earnings is derived in reports (§10.6) | |
 
 Withholding on purchases (company withholds from supplier): `Dr 2000 AP (gross) / Cr Payment account (net) · Cr 2150 Withholding payable`.
 
@@ -2690,11 +2985,11 @@ Withholding on purchases (company withholds from supplier): `Dr 2000 AP (gross) 
 
 | Accounting term | EN UI label | AR UI label |
 |---|---|---|
-| Accounts receivable | Customers owe you | الزبائن مطلوبين لك |
-| Accounts payable | You owe suppliers | أنت مطلوب للموردين |
-| Undeposited funds / clearing | Waiting to go to bank | بانتظار الإيداع بالبنك |
+| Accounts receivable | Customers owe you | مستحقات على الزبائن |
+| Accounts payable | You owe suppliers | مستحقات للموردين |
+| Undeposited funds / clearing | Waiting to go to bank | بانتظار الإيداع في البنك |
 | Customer deposits / unapplied credit | Customer credit | رصيد الزبون |
-| Post / issue | Issue (number becomes final) | إصدار (الرقم يصير نهائي) |
+| Post / issue | Issue (number becomes final) | إصدار (يصبح الرقم نهائياً) |
 | Void | Cancel this document | إلغاء المستند |
 | Credit note | Credit note (refund/correction) | إشعار دائن (تصحيح/إرجاع) |
 | Debit note | Extra charge note | إشعار مدين (مبلغ إضافي) |
@@ -2712,6 +3007,15 @@ Withholding on purchases (company withholds from supplier): `Dr 2000 AP (gross) 
 | Zero-rated / Exempt / Out of scope | 0 % taxable / Exempt / Not taxable | خاضع بنسبة صفر / معفى / خارج نطاق الضريبة |
 | Lock date | Closed until | مقفل لغاية |
 | Trial balance | Balances check | ميزان المراجعة |
+| Account ledger card | Account card (cash book / bank book) | بطاقة حساب (دفتر الصندوق / دفتر البنك) |
+| Item ledger / stock card | Item card | بطاقة صنف |
+| Customer / supplier ledger | Party card (statement) | بطاقة الزبون / المورد (كشف حساب) |
+| Profit & loss | How much did I make | كم ربحت |
+| Balance sheet | What I own and owe | ما أملكه وما عليّ |
+| Retained earnings | Profit kept from past years | الأرباح المحتجزة من السنوات السابقة |
+| Receipt voucher / payment voucher | Receipt / Payment voucher | سند قبض / سند صرف |
+| Cash session (X/Z report) | Cash drawer session / day close | جلسة الصندوق / إغلاق اليوم |
+| Installments | Pay in parts | الدفع بالأقساط |
 
 ---
 
@@ -2733,8 +3037,269 @@ Withholding on purchases (company withholds from supplier): `Dr 2000 AP (gross) 
 | QuestPDF | not free above $1M revenue |
 | Slint (royalty-free tier) | requires in-app attribution (not chosen anyway) |
 | wkhtmltopdf | outdated engine (quality, not license) |
-**Preferred building blocks:** tauri + plugins, rusqlite, rust_decimal, iso_currency, rust_xlsxwriter, calamine, typst / typst-as-lib, qrcode, csv, quick-xml, serde, sha2, ed25519-dalek, notify, windows, lettre (verify), keyring (verify), driver.js, uPlot, Noto/Amiri/Inter fonts (OFL).
+**Preferred building blocks:** tauri + plugins, rusqlite, rust_decimal, iso_currency, rust_xlsxwriter, calamine, zip, typst / typst-as-lib (package download and embedded fonts disabled), qrcode, csv, quick-xml, serde, sha2, ed25519-dalek, rustls (ring provider), notify, windows, lettre (verify), keyring (verify), zstd (verify size), a barcode crate such as barcoders (verify), driver.js, uPlot, Noto/Amiri/Inter print fonts (OFL).
 CI enforces this with `cargo-deny` (Rust) and a license checker for npm; any exception needs an ADR approved by the human.
+
+---
+
+## Appendix H — Screen & task registry (normative)
+
+Machine copy: `src/help/registry/screens.json` and `tasks.json`; this appendix is the initial content. Conventions: banner `hint_id` = `screen.<screen_id>.banner`; F1 page = `docs/help/{ar,en}/<screen_id>.md`; the "Feature-list seeds" column seeds the banner's `features` list (§18.5), which must end up listing **every** command registered for the screen. Banner bodies follow §18.11 (bodies for the core screens are in §18.12). Editions: "all" = Trial/Starter/Pro; milestone in brackets when later than MVP.
+
+**CI tests (MUST):** every router route has a row here with ar and en banner title/body, a non-empty `features` list and an F1 page in both languages; every command registered for a screen appears in its `features`; every `task_id` has exactly one start emitter and one completion emitter in code; every dialog/wizard has its subtitle.
+
+**H.1 Screens**
+| `screen_id` | Route | Edition · module | Banner title (EN / AR) | Feature-list seeds | `task_ids` | Empty state (primary action) |
+|---|---|---|---|---|---|---|
+| `dashboard` | `/` | all | Your business today / عملك اليوم | Today panel, Get-started checklist, status chips, global New | — | n/a |
+| `hub` | `/hub` | all | All your sales documents / جميع مستندات البيع | Sales/Purchases switch, New menu, live counts, saved views, bulk print/send/convert/mark paid, preview | `invoice.create`, `quote.create`, `doc.convert`, `payment.mark_paid` | New invoice · Ctrl+N; Import |
+| `editor` | `/doc/:uid` | all | Fast invoice entry / إدخال سريع للفاتورة | typeahead, inline create, paste from Excel, arithmetic, price source, last prices, Issue (F10), Print (Ctrl+P), Correct this invoice, installments, BoQ mode, pay-to account, second currency | `invoice.create`, `invoice.issue`, `invoice.correct`, `item.inline_create`, `doc.void_or_credit`, `boq_lite.create` | n/a |
+| `quick_sale` | `/pos` | all [v1]; off when `pos_fiscalization ≠ none` | Quick sale / بيع سريع | scanner input, tender & change, split payment, thermal print, drawer kick, X/Z reports | `cash_sale.create`, `cash_session.close` | n/a |
+| `cash_sessions` | `/pos/sessions` | all [v1] | Cash drawer sessions / جلسات الصندوق | open/close, X report, Z report, differences | `cash_session.close` | Open a session |
+| `purchases` | `/hub?side=purchases` | basic bills all; PO/GRN Pro | Purchases & bills / المشتريات وفواتير الموردين | PO, goods receipt, bills, supplier credits, pay several bills, advances | `bill.create`, `po.create`, `bill.pay` | New bill · Ctrl+N |
+| `customers` | `/customers` | all | Customers & balances / الزبائن وأرصدتهم | card (Ctrl+L), statement, receive money, own prices, open Excel folder, consolidated parent | `customer.create`, `payment.receive` | New customer · Ctrl+N; Import |
+| `suppliers` | `/suppliers` | all | Suppliers & bills / الموردون وفواتيرهم | card, statement, pay bills, supplier prices | `supplier.create`, `bill.pay` | New supplier · Ctrl+N; Import |
+| `items` | `/items` | all | Materials & products / المواد والمنتجات | item card, stock, units, codes, barcodes, accounts, labels | `item.create` | New item · Ctrl+N; Import |
+| `prices` | `/prices` | all | Prices by date / الأسعار حسب التاريخ | scopes, valid from/to, incl/excl, bulk % change with preview | `price.set_dated` | New price; Import prices |
+| `price_lists` | `/prices/lists` | all | Price lists / قوائم الأسعار | lists per customer group, incl/excl, assign to customers | `price_list.create` | New price list |
+| `payments` | `/payments` | all | Money in and out / المقبوضات والمدفوعات | receipt and payment vouchers, allocation, refunds, deposits | `payment.receive`, `payment.pay` | Receive money |
+| `quick_expense` | `/expenses/new` | all | Quick expense / مصروف سريع | category chips, paid from, tax included, receipt photo | `expense.quick` | n/a |
+| `expenses` | `/expenses` | all | Expenses / المصاريف | by category, receipts, Excel copy | `expense.quick` | New expense |
+| `petty_cash` | `/petty-cash` | all | Petty cash / صندوق النثرية | top up, count cash, account card | `pettycash.count` | Top up petty cash |
+| `transfers` | `/transfers` | all | Move money between accounts / تحويل الأموال بين الحسابات | transfers, cross-currency amounts, deposits to bank | `transfer.create` | New transfer |
+| `card_settlements` | `/settlements` | all | Waiting for the bank / بانتظار البنك | payouts, fees, multi-receipt match | `settlement.payout` | n/a |
+| `cheques` | `/cheques` | all | Cheques due / الشيكات المستحقة | incoming and outgoing, status changes, due dates | `cheque.record` | n/a ("No cheques yet") |
+| `accounts` | `/accounts` | all | Chart of accounts / دليل الحسابات | plain names, sub-accounts, account card | `account.create_sub` | n/a |
+| `account_card` | `/cards/account/:code` | all | Account card / بطاقة حساب | running balance, period, drill-down, PDF/XLSX | — | "No movements in this period" |
+| `item_card` | `/cards/item/:uid` | all | Item card / بطاقة صنف | running quantity, cost, value, warehouse filter | — | "No movements in this period" |
+| `statements` | `/statements` | all | Customer statements / كشوفات الحساب | activity/outstanding, aging edges, per currency, bulk, scheduled [v1] | `statement.create` | n/a |
+| `fx_rates` | `/fx` | Starter: one extra currency [v1]; Pro | Exchange rates / أسعار الصرف | manual, CSV, optional online fetch, tax rates | `fx.add_rate` | Add today's rate |
+| `inventory` | `/inventory` | all | Real costs / الكلفة الحقيقية | on hand, valuation at a date, layers (Pro) | — | n/a |
+| `stock_ops` | `/inventory/ops` | adjustments all; warehouses/transfers Pro [v1] | Warehouses & stock moves / المخازن وحركات المخزون | warehouses, transfers, adjustments | `stock.adjust` | New adjustment |
+| `landed_cost` | `/inventory/landed` | Pro [v1] | Shipping & customs / الشحن والجمارك | vouchers, allocation basis, consumed-qty adjustment | `landed_cost.apply` | New landed-cost voucher |
+| `bom` | `/bom` | Pro [v1] | Recipes & assemblies / الوصفات والتجميع | versions, waste, labour, cost at a date | `bom.create`, `assembly.create` | New recipe |
+| `comparisons` | `/analytics` | basic all; full Pro [v1] | Compare prices & margins / مقارنة الأسعار والهوامش | price history, margins, cost drift | — | n/a |
+| `reports` | `/reports` | all | Reports / التقارير | catalog, search, favourites, layouts | — | n/a |
+| `report_view` | `/reports/:id` | all; grouping/charts Pro [v1] | Your report, your layout / تقريرك بتخطيطك | column chooser, sort, filter, group, chart, save layout, PDF/XLSX | `report.customize` | "No data for these filters" |
+| `vat_return` | `/tax/return` | all [v1] | VAT return / الإقرار الضريبي | boxes, drill-down, Excel export, mark filed | `vat_return.prepare` | n/a |
+| `tax_periods` | `/tax/periods` | all [v1] | Tax periods / الفترات الضريبية | open/filed/locked periods | — | n/a |
+| `tax_settings` | `/settings/tax` | all | Taxes / الضرائب | registrations, rates, inclusive mode, disclaimer | — | n/a |
+| `country_packs` | `/settings/tax/packs` | all | Country rules / قواعد الدولة | import signed pack, versions, verified badge | `pack.import` | n/a |
+| `accountant_export` | `/export/accountant` | GL+TB all; full Pro [v1] | Send to your accountant / إرسال إلى المحاسب | pack, mappings, lock period | `accountant.export` | n/a |
+| `bank_rec` | `/bank-rec` | Pro [v1] | Match your bank statement / طابِق كشف البنك | import, suggestions, rules, finish at zero | `bank_rec.run` | Import a bank file |
+| `users_roles` | `/settings/users` | all | Users & roles / المستخدمون والصلاحيات | members, roles, PIN, stamp permission, recovery code | `member.add` | n/a |
+| `license` | `/settings/license` | all | Your license / ترخيصك | activate online/offline, deactivate, edition | `license.activate` | n/a |
+| `appearance` | `/settings/appearance` | all | Look & colours / المظهر والألوان | presets, accent, brand colour, overrides, density, text size, UI font, export theme | `appearance.customize` | n/a |
+| `help_tips` | `/settings/help` | all | Help & tips / المساعدة والنصائح | help level, task reminder mode, reset tips | — | n/a |
+| `email_settings` | `/settings/email` | all [v1] | Email sending / إرسال البريد الإلكتروني | SMTP, message templates, test send | — | n/a |
+| `recurring` | `/recurring` | all [v1] | Recurring invoices / الفواتير المتكررة | schedules, catch-up drafts | `recurring.create` | New recurring invoice |
+| `reminders` | `/reminders` | all [v1] | Payment reminders / تذكيرات الدفع | 3 levels, templates, log | — | n/a |
+| `branches_series` | `/settings/numbering` | series all; branches Pro [v1] | Numbering & branches / الترقيم والفروع | patterns, yearly reset, high-water marks | — | n/a |
+| `backup` | `/settings/backup` | all | Keep your data safe / حافظ على بياناتك | backup now, restore, folder, cap, verification | `backup.restore` | n/a |
+| `excel_settings` | `/settings/excel` | all | Your Excel copy / نسختك في إكسل | folder, layout, rebuild, problems, role warning, `_Owner` folder | `excel.open_locked` | n/a |
+| `templates` | `/templates` | all | Your document design / تصميم مستنداتك | gallery, apply my brand, basic settings, assignments | `template.edit` | n/a |
+| `template_designer` | `/templates/:uid/design` | Pro [v1] | Design freely / صمّم بحرية | click-to-select, any colour, free placement, visibility rules, pre-printed, calibration, `.adtemplate` | `template.edit` | n/a |
+| `labels` | `/items/labels` | all [v1] | Barcode labels / ملصقات الباركود | Code128/EAN-13, sheets, thermal | `labels.print` | n/a |
+| `letters` | `/letters` | all | Official letters / الكتب الرسمية | templates, fields, rich-but-safe body, stamp, Hijri | `letter.issue` | New letter |
+| `letter_register` | `/letters/register` | all | Letter register / سجل الصادر والوارد | outgoing/incoming, search, replies, Excel register | `letter.receive` | Record an incoming letter |
+| `people` | `/people` | all; owner/manager only | People for certificates / بيانات الموظفين للشهادات | HR fields, certificates, anonymize | `person.create` | New person |
+| `signers` | `/settings/signers` | all | Signers & stamps / المخوَّلون بالتوقيع والأختام | signature/stamp images, titles | — | Add a signer |
+| `eng_tables` | `/eng-tables` | all [v1] | Engineering tables / الجداول الهندسية | built-in tables with sources, own tables, calculator | `eng.add_table` | n/a |
+| `projects` | `/projects` | Pro [v1] | Projects & contracts / المشاريع والعقود | chain breadcrumb, tax profile, dashboard | `project.create` | New project |
+| `boq_editor` | `/projects/:uid/boq` | Pro [v1] | Bill of quantities / جدول الكميات | tree grid, paste, functions, versions, return client file | `boq.paste` | Paste or import a BoQ |
+| `rate_library` | `/projects/rates` | Pro [v1] | Rate build-ups / تحليل الأسعار | materials, labour, plant, refresh costs | — | New build-up |
+| `variations` | `/projects/:uid/variations` | Pro [v1] | Change orders / أوامر التغيير | register, statuses, SoV lines | `variation.create` | New change order |
+| `pay_apps` | `/projects/:uid/payapps` | Pro [v1] | Progress claims / المستخلصات | cumulative entry, certification, deductions, invoice | `payapp.create` | New progress claim |
+| `takeoff` | panel in `boq_editor` | Pro [v2] | Quantity takeoff / حصر الكميات | dimension rows, deductions, functions, import | — | n/a |
+| `subcontracts` | `/projects/:uid/subcontracts` | Pro [v2] | Subcontracts / عقود الباطن | packages, applications, retention, expiry alerts | — | New package |
+| `cost_budget` | `/projects/:uid/cost` | Pro [v2] | Cost vs budget / الكلفة مقابل الميزانية | committed, actual, forecast, variance | — | n/a |
+| `cash_flow` | `/projects/:uid/cashflow` | Pro [v2] | Cash flow & S-curve / التدفق النقدي ومنحنى S | planned, certified, actual, funding gap | — | n/a |
+
+**H.2 Tasks**
+| `task_id` | Start (UI event `task:start`) | Completion (exact domain event) | Hint `hint_id` · title EN / AR |
+|---|---|---|---|
+| `invoice.create` | New → Invoice, Ctrl+N in hub, Ctrl+Shift+N | `document.issued` (INVOICE, same draft uid) | `task.invoice.create.paste` · Paste lines from Excel / الصق الأسطر من إكسل |
+| `invoice.issue` | first F10 / Issue click on a draft | `document.issued` (same uid) | `task.invoice.issue` · Numbers are final / الرقم نهائي |
+| `invoice.correct` | More → Correct this invoice | `document.issued` of the linked replacement draft | `task.invoice.correct` · Credit + corrected copy / إشعار دائن ونسخة مصححة |
+| `item.inline_create` | typeahead with no match / Alt+C | `item.created` (origin = editor) | `task.invoice.newitem` · Create items inline / أنشئ صنفاً من هنا |
+| `doc.void_or_credit` | More → Void or Credit note | `document.voided` or `credit_note.issued` | `task.void_vs_credit` · Void or credit note? / إلغاء أم إشعار دائن؟ |
+| `quote.create` | New → Quote | `document.issued` (QUOTE) | `task.quote.create` · Quotes are not sales / عرض السعر ليس مبيعاً |
+| `doc.convert` | Convert to… / Ctrl+Shift+C | `document.converted` | `task.doc.convert` · Convert what's left / حوّل المتبقي فقط |
+| `payment.receive` | Receive money panel opened | `payment.posted` (direction in) | `task.payment.receive` · One payment, many invoices / دفعة واحدة لعدة فواتير |
+| `payment.mark_paid` | Mark paid click / Ctrl+M | `payment.posted` not undone within 10 s | `task.payment.markpaid` · Undo for 10 seconds / يمكنك التراجع خلال 10 ثوانٍ |
+| `payment.pay` / `bill.pay` | Pay bill / New payment voucher | `payment.posted` (direction out) | `task.payment.pay` · Pay several bills at once / سدّد عدة فواتير معاً |
+| `price.set_dated` | New price | `price.changed` | `task.price.dated` · Prices from a date / سعر ابتداءً من تاريخ |
+| `statement.create` | Statement button | `statement.generated` | `task.statement` · Saved exactly as sent / يُحفظ الكشف كما أُرسل |
+| `excel.open_locked` | Open in Excel on a locked file | `excel.file_rebuilt` (same target) | `task.excel.locked` · Excel file is open / ملف إكسل مفتوح |
+| `template.edit` | open template settings/designer | `template.saved` | `task.template.edit` · See the real PDF / عاين ملف PDF الحقيقي |
+| `report.customize` | open the Layout panel | `report_layout.saved` | `task.report.layout` · Save your layout / احفظ تخطيطك |
+| `import.run` | start the import wizard | `import.committed` | `task.import` · Dry run first / جرّب أولاً دون حفظ |
+| `expense.quick` | New → Quick expense | `expense.quick_posted` | `task.expense.quick` · Attach the receipt photo / أرفق صورة الإيصال |
+| `transfer.create` | New transfer | `transfer.posted` | `task.transfer` · Moving money is not income / التحويل ليس دخلاً |
+| `cheque.record` | payment method = cheque | `payment.posted` with a cheque | `task.cheque` · Track the due date / تابع تاريخ الاستحقاق |
+| `bank_rec.run` | start a reconciliation | `bank_rec.finished` | `task.bankrec` · Finish at zero / أنهِ عندما يصبح الفرق صفراً |
+| `vat_return.prepare` | open a return for a period | `tax_period.filed` | `task.vat.file` · Filing locks the period / وضع الإقرار كمقدَّم يقفل الفترة |
+| `letter.issue` | New letter | `letter.issued` | `task.letter.issue` · Numbered on issue / يُرقَّم الكتاب عند الإصدار |
+| `letter.receive` | Record incoming letter | `letter.received` | `task.letter.receive` · Record their reference / سجّل عددهم وتاريخهم |
+| `boq_lite.create` | New quote in BoQ mode | `document.issued` (QUOTE, BoQ mode) | `task.boqlite` · Use engineering tables / استخدم الجداول الهندسية |
+| `boq.paste` | paste into the BoQ grid | `boq.saved` | `task.boq.paste` · Paste your BoQ / الصق جدول الكميات |
+| `payapp.create` | New progress claim | `pay_app.certified` | `task.payapp.cumulative` · Enter totals to date / أدخل المنجز حتى الآن |
+| `cash_session.close` | Close day / Z report | `cash_session.closed` | `task.cash.close` · Count the cash first / عُدّ النقد أولاً |
+| `backup.restore` | Restore backup | `backup.restored` | `task.restore` · Restores into a new file / الاستعادة إلى ملف جديد |
+| `owner.margin` | F9 | `ui.margin_shown` (PIN accepted; UI-only event, flagged) | `task.owner.margin` · Only you see margins / الهوامش تظهر لك فقط |
+| `appearance.customize` | open Appearance | `ui_prefs.changed` (theme) | `task.appearance` · Try a preset first / جرّب نمطاً جاهزاً أولاً |
+
+Tasks not listed for a screen in H.1 (`customer.create`, `item.create`, `stock.adjust`, …) are simple forms: they register start/completion events but ship without a task hint unless one is added to the catalog.
+
+**H.3 Dialogs and wizards (one-line subtitle, not dismissible)**
+| Dialog / wizard | Subtitle (EN / AR) |
+|---|---|
+| Setup wizard | Four short steps; you can change everything later. / أربع خطوات قصيرة، ويمكنك تغيير كل شيء لاحقاً. |
+| Import wizard | Nothing is saved until the last step, and you can undo for 7 days. / لا يُحفظ شيء قبل الخطوة الأخيرة، ويمكنك التراجع خلال 7 أيام. |
+| Issue confirmation | The number becomes final; corrections need a credit note. / يصبح الرقم نهائياً، ويكون التصحيح بإشعار دائن. |
+| Convert dialog | Only the remaining quantities are copied by default. / تُنسخ الكميات المتبقية فقط افتراضياً. |
+| Allocation dialog | Oldest invoices are paid first; you can change it. / تُسدَّد الفواتير الأقدم أولاً، ويمكنك التعديل. |
+| Correct this invoice | A credit note cancels the original and a corrected copy opens. / يُلغى الأصل بإشعار دائن وتُفتح نسخة مصححة. |
+| Paste mapping | Tell us once which column is which; we remember it. / حدّد مرة واحدة ما يمثله كل عمود، وسنتذكر ذلك. |
+| Printer calibration | Print the grid, measure the shift, enter it once per printer. / اطبع الشبكة، وقِس الإزاحة، وأدخلها مرة واحدة لكل طابعة. |
+| Restore backup | Restores into a new file; your current file is not touched. / تتم الاستعادة إلى ملف جديد دون المساس بملفك الحالي. |
+| Integrity check | Recomputes every hash and number; nothing is changed. / يعيد حساب كل بصمة ورقم دون تغيير أي شيء. |
+| Activation | Online, or offline with a code; your data always stays available. / عبر الإنترنت أو دونه برمز، وتبقى بياناتك متاحة دائماً. |
+| Recovery code | Print or write this code; it is the only way to reset the owner PIN. / اطبع هذا الرمز أو دوّنه؛ فهو الطريقة الوحيدة لإعادة تعيين رمز المالك. |
+
+---
+
+## Appendix I — Print data contract (normative)
+
+Every printable kind (§9.2 N `doc_templates.doc_type`) receives exactly one JSON object, built in Rust and passed to Typst as the virtual file `/data.json` (§17.1). The template generator, the designer's field pickers, `visible_if` rules (§17.2), letter placeholders (§16.4) and the report builder (§17.10) all use these paths. Schemas: `assets/print-contract/<kind>.schema.json` (JSON Schema 2020-12), versioned by `contract_version`.
+
+**Rules**
+- Rust formats every number, amount, quantity, date and digit style (Latin / Arabic-Indic, per template) into `text` fields; Typst never formats numbers. Money appears as `{ "minor": <int>, "text": "<formatted>" }`; `minor` exists for visibility rules and checks only.
+- Dates appear as `{ "iso": "YYYY-MM-DD", "text": "<formatted>", "hijri_text": "<optional>" }`.
+- Strings are raw (no escaping, no markup); Typst reads them through `json()`, so they can never become code.
+- Issued documents use the frozen snapshots (`party_snapshot_json`, `seller_snapshot_json`); drafts use live data and set `flags.draft = true`.
+- Owner-only fields (cost, margin) never appear in the contract. `person.national_id` and `person.salary` appear only when the template's `fields_json` requests them and the issuing user is owner or manager.
+- Additions are backwards compatible. A rename or removal bumps `contract_version`; the generator keeps an adapter for older versions so user templates are never force-migrated (§3.7).
+- CI: data generated for every fixture document validates against its schema; every template field reference and every `visible_if` path resolves against the schema.
+
+| Path | Type | Content |
+|---|---|---|
+| `contract_version` | int | version the data conforms to |
+| `kind` | string | printable kind, e.g. `INVOICE`, `PAYMENT_RECEIPT`, `STATEMENT`, `LETTER:salary_certificate`, `REPORT`, `CHEQUE`, `LABEL` |
+| `lang` | object | `primary`, `secondary`, `digits` (`latn` / `arab`), `layout` (`single` / `stacked` / `side_by_side`) |
+| `flags` | object | `draft`, `void`, `demo`, `copy_no`, `preprinted` (watermarks, copy labels, pre-printed mode) |
+| `labels.<key>` | `{ar, en, …}` | every printable label resolved for this template; a missing translation falls back to the primary language |
+| `seller` | object | `legal_name`, `legal_name_secondary`, `trade_name`, `tax_ids[{scheme, value}]`, `registered` (bool per scheme), `address{building_no, street, additional_no, district, city, region, postal_code, country_code, line_free}`, `phone`, `email`, `website`, `logo`, `stamp`, `signature` (image ids) |
+| `party` | object | `code`, `name`, `name_secondary`, `kind`, `tax_ids[]`, `billing_address{…}`, `shipping_address{…}`, `site_address{…}`, `contact{name, phone, email}`, `peppol_id` |
+| `document` | object | `uid`, `type`, `title{ar, en}` (from pack and registration rules, §11.2), `number`, `doc_date`, `supply_date`, `tax_point_date`, `due_date`, `expires_on` (dates), `currency`, `fx_rate_text`, `dual_currency`, `dual_fx_rate_text`, `reference`, `subject`, `notes`, `terms`, `price_mode`, `tax_treatment`, `place_of_supply`, `original{number, date}` (notes), `reason`, `salesperson`, `branch{code, name}`, `project_code`, `custom{<key>: value}` |
+| `lines[]` | array | `line_no`, `kind` (item / text / section / subtotal / deposit_deduction / retention / advance_recovery / progress), `item_code`, `barcode`, `description`, `description_secondary`, `qty{value, text}`, `uom{code, name}`, `unit_price{text}`, `discount_pct_text`, `discount`, `net`, `tax_code`, `tax_rate_text`, `tax`, `total` (money), `progress_pct_to_date_text`, `custom{}` |
+| `charges[]` | array | `kind`, `reason`, `amount` (money), `tax_category`, `tax_rate_text` |
+| `tax_summary[]` | array | `category_code`, `category_label{ar, en}`, `rate_text`, `base`, `amount`, `amount_local` (money), `exemption_text{ar, en}` |
+| `totals` | object of money | `subtotal`, `discount`, `charges`, `tax`, `wht`, `rounding`, `total`, `payable`, `paid`, `balance`, `total_base`, `tax_local`, `dual_total` |
+| `amount_in_words` | `{ar, en}` | tafqeet of `totals.payable` (or the letter/cheque amount) with currency and subunit names |
+| `payment` | object | `pay_to{account_name, bank_name, iban, account_no, currency, payment_means_code}`, `reference`, `methods[]`, `qr{type, payload}` (EPC / Swiss / URL) |
+| `qr` | object | pack QR `{type, payload}` (e.g. `zatca_tlv_phase1`, base64 computed in Rust) |
+| `installments[]` | array | `seq`, `due_date`, `amount`, `paid` |
+| `statement` | object (`STATEMENT`) | `type`, `period{from, to}`, `as_of`, `currency`, `opening`, `rows[{date, type, doc_no, reference, due_date, days_overdue, debit, credit, balance}]`, `closing`, `aging{edges[], buckets[]}`, `unallocated` |
+| `voucher` | object (`PAYMENT_RECEIPT`, `PAYMENT_VOUCHER`, `JOURNAL_VOUCHER`) | `number`, `date`, `party`, `method`, `account`, `amount`, `cheque{no, bank, due_date}`, `card_last4`, `allocations[{doc_no, amount}]`, `memo`, journal `lines[]` for journal vouchers |
+| `cheque` | object (`CHEQUE`) | `payee`, `date`, `amount`, `amount_in_words`, `crossed` |
+| `label` | object (`LABEL`) | `item_code`, `name`, `price`, `barcode{symbology, value, image}` |
+| `project` | object | `code`, `name`, `site_address`, `contract_type`, `tax_profile`, `retention_pct_text` |
+| `pay_app` | object (`PAY_APP`) | G702-style header values (money) and G703-style `lines[]` |
+| `boq` | object (`BOQ`, BoQ-lite quotes) | `sections[{ref, title, items[{ref, description, unit, qty, rate, amount}], subtotal}]`, `summary[]`, `grand_total` |
+| `letter` | object (`LETTER:*`) | `register_no`, `date`, `direction`, `subject`, `recipient{name, title, address}`, `salutation`, `body_ast` (§16.5), `fields{<key>: value}` per the template's `fields_json`, `closing`, `signer{name, title, signature, stamp}`, `cc[]`, `attachments[]`, `external_ref{no, date}` |
+| `person` | object (HR letters) | `name`, `name_secondary`, `job_title`, `department`, `hire_date`, `end_date`, `nationality`, `salary{text, words{ar, en}}`, `national_id` (restricted, see rules) |
+| `report` | object (`REPORT`) | `title{ar, en}`, `filters_text[]`, `columns[{field, label, align, width_pct}]`, `groups[]`, `rows[][]` (pre-formatted text), `totals[]`, `generated_at` |
+| `images.<id>` | virtual file | logos, stamps, signatures, barcodes and QR PNGs served by the Typst World |
+
+---
+
+## Appendix J — License signer service (normative; build in Phase 9)
+
+**Purpose.** A tiny, stateless service that turns a merchant-of-record (MoR) license key into an Ed25519-signed offline token (§21.2). The MoR keeps customer and activation records; the signer stores nothing except rate-limit counters. Code lives in `services/license-signer/`.
+
+**Before building (A29):** confirm that the chosen MoR (Lemon Squeezy preferred, Paddle alternative) accepts an Iraq-based seller and can pay out to Iraq or to an account the founder controls (Stripe/PayPal coverage). If not, decide the selling entity first — this can block Phase 9.
+
+**Hosting (ASSUMPTION):** one serverless function on a provider with a free/low tier and a secret store (e.g. Cloudflare Workers or similar), plus a static offline-activation page on the same domain. HTTPS only; no database; logs keep only `key_hash` prefixes and error codes (no keys, no IPs beyond platform defaults); no telemetry.
+
+**Endpoints (JSON over HTTPS):**
+| Method & path | Request | Response | Notes |
+|---|---|---|---|
+| `POST /v1/activate` | `{license_key, instance_name, machine_hint, app_version, nonce}` | `{token}` | calls MoR *activate*, then *validate*; signs the token |
+| `POST /v1/refresh` | `{license_key, instance_id, machine_hint, nonce}` | `{token}` | re-issues a token (e.g. after an edition upgrade); MoR *validate* |
+| `POST /v1/deactivate` | `{license_key, instance_id}` | `{ok: true}` | MoR *deactivate*; frees an activation slot |
+| `POST /v1/offline` | `{request_code}` (Base32 of JCS `{key_hash, license_key_enc, machine_hint, nonce}`) | `{response_code, qr_png}` | used by the offline activation page; same checks as activate |
+| `GET /v1/keys` | — | `{keys: [{kid, public_key_b64, status}]}` | informational; the app embeds its keys |
+
+**MoR calls (Lemon Squeezy License API; verify current docs before building):** `POST /v1/licenses/activate` (`license_key`, `instance_name`) → `instance.id`; `POST /v1/licenses/validate` (`license_key`, `instance_id`) → status, product/variant (edition), customer; `POST /v1/licenses/deactivate` (`license_key`, `instance_id`). The activation limit (3, A11) is configured on the MoR product, not in the signer.
+
+**Token (canonical form):** payload = JCS (RFC 8785) of `{v:1, kid, key_hash, edition, major, licensee_hash, instance_id, machine_hint, issued_at, updates_until, addons:[]}`; signature = Ed25519 over the JCS bytes; transport = `base64url(payload) + "." + base64url(signature)`; offline response code = Base32 of the same bytes in groups of 5 plus a QR. `key_hash` = SHA-256 of the normalized key; `licensee_hash` = SHA-256 of the lower-cased customer email + per-product salt.
+
+**Key custody & rotation:** the Ed25519 private key lives only in the host's secret store, with two encrypted offline backups held by the founder. Every token carries `kid`. The app embeds the current public key and the next one; rotation = switch the signer to the next key and ship an app update that embeds the one after. Old tokens stay valid unless their `kid` appears in a signed revocation list shipped with app updates (never fetched at runtime).
+
+**Offline activation page:** static HTML/JS on the signer domain, works on a phone: paste or scan the Activation Request Code → shows the Response Code and its QR. It sends only the request code to `/v1/offline`.
+
+**Error codes** (each maps to a localized message with a next step): `LIC_INVALID_KEY`, `LIC_LIMIT_REACHED` (link to self-service deactivation), `LIC_REFUNDED_OR_DISABLED`, `LIC_EDITION_MISMATCH`, `LIC_BAD_REQUEST_CODE`, `LIC_MOR_UNAVAILABLE` (retry later; offline use continues), `LIC_CLOCK_SKEW`, `LIC_RATE_LIMITED`, `LIC_INTERNAL`.
+
+**Limits & tests:** rate limits per `key_hash` and per IP; contract tests against a MoR sandbox; a tampered token, wrong `kid` or wrong `machine_hint` is rejected by the app (Phase 9 AC2).
+
+---
+
+## Appendix K — Requirements traceability (normative)
+
+Machine copy: `docs/TRACEABILITY.md`. Test ids: `P<phase>.AC<n>` = acceptance criterion n of that phase (§27); `X12.11.<n>` = item n of §12.11. Tests carry a `trace:` tag (e.g. `// trace: P7.AC3`); `scripts/check-traceability.ts` fails CI when a row has no test id or a test id has no tagged test.
+
+**K.1 Founder request**
+| ID | Founder request | Spec | Phase | Acceptance tests |
+|---|---|---|---|---|
+| F1 | Very, very light program | §1, §3.2, §5.2 size ledger, §6 WebView2 settings, §12.3, §20, §22 | P0, P1, P7, every phase | P0.AC1, P0.AC5, P0.AC6, P1.AC6, P1.AC10, P2.AC7, P7.AC2 |
+| F2 | Easy-to-use desktop app | §3.5, §13, §18, §19 | P1, P4, P8 | P1.AC4, P4.AC4 (HUMAN GATE + proxy), P8.AC1 (HUMAN GATE + proxy) |
+| F3 | Per-customer Excel with invoices, prices and statements | §12.6 (folder per customer), §12.7 | P7 | X12.11.1–7, X12.11.15, P7.AC2 |
+| F4 | Every operation saved in an Excel table | §12.2 registry, §12.7 master reports (Activity), Appendix D | P7 | P7.AC3, P7.AC4, X12.11.8, X12.11.9 |
+| F5 | Taxes handled correctly | §11, Appendix C | P4, P14 | P4.AC1, P4.AC6, P4.AC10, P14.AC1–9 |
+| F6 | Government and official letters | §16 | P8b, P16 | P8b.AC1–4, P16.AC1–4 |
+| F7 | Link invoices to accounts and cards | §14.3 (`pay_to_account_code`), §14.4, §14.10 cards, Appendix F | P5, P6 | P6.AC2, P6.AC9, P5.AC8 |
+| F8 | One comprehensive place to create invoices | §13.2 hub + universal New menu, §13 | P4, P12 | P4.AC3, P12.AC1, P12.AC8 |
+| F9 | Tables for engineers | §15.16, §15.17, §15 | P10b, P17, P18 | P10b.AC1–3, P17.AC1–3 |
+| F10 | Customizable report layouts | §17.10 | P6, P13 | P6.AC6, P13.AC7 |
+| F11 | Editable colours and look | §17.9 Appearance, §17.2 colours | P1, P13 | P1.AC9, P13.AC4 |
+| F12 | A short description of all features above every screen | §18.5 expander, §18.12, Appendix H | P1, P8 | P1.AC8, P8.AC5 |
+| F13 | Task alert shown every time until "Don't show again", also offered after finishing | §18.4 (`always`), §18.6 completion toast, A28 | P1, P8 | P1.AC7, P8.AC2, P8.AC3 |
+| F14 | Research what users wish for, and build it completely | research §10 → K.2 | all | K.2 |
+
+**K.2 User wishes (research report, section 10)**
+| ID | Wish | Spec | Phase | Acceptance tests |
+|---|---|---|---|---|
+| W1 | No subscription, no forced cloud, pay once | §3.3, §21.2 | P9 | P9.AC1, P9.AC2 |
+| W2 | Never force a redesign of screens or templates | §3.7, §17.2 versioning | P5, P9 | P5.AC3, P9.AC3 |
+| W3 | Free invoice design: move fields, add columns and custom fields | §17.2, §17.4 | P13 | P13.AC2, P13.AC3 |
+| W4 | Paste rows from Excel into invoice lines | §13.5 | P1, P4 | P1.AC4 |
+| W5 | Arrow-key navigation in lines | §3.5, §19.3 | P1 | P1.AC4, P1.AC11 |
+| W6 | Fast responses (no seconds per click) | §3.2 | P1, P4 | P1.AC6, P4.AC4 (proxy: keypress p95) |
+| W7 | Frequent actions close at hand | §19.1, §13.2 | P4, P8 | P8.AC1 (proxy: action count) |
+| W8 | Dark mode, control of colours and fonts | §17.9 | P1 | P1.AC9 |
+| W9 | Compact view | §17.9 density | P1 | P1.AC9 |
+| W10 | Statement in Excel, a file per customer | §12.7, §12.9 | P6, P7 | X12.11.6, P7.AC2 |
+| W11 | Running balance, configurable aging, statement per currency | §10.8, §12.7, §12.9 | P6 | P6.AC1 |
+| W12 | Old statements are never recomputed | §12.9 snapshots | P6 | P6.AC3 |
+| W13 | Real Arabic, bilingual invoices, ZATCA QR | §17.5, §11.7 | P5, P14 | P5.AC1, P14.AC3 |
+| W14 | Logo at the right size, A4 default | §17.4 | P5 | P5.AC5 |
+| W15 | Multi-page invoices that do not break | §17.2 | P5 | P5.AC2 |
+| W16 | Upload custom fonts | §17.4 | P13 | P13.AC8 |
+| W17 | More contextual help, simpler menus | §18 | P1, P8 | P1.AC8, P8.AC5 |
+| W18 | Tips that don't interrupt and are easy to turn off | §18.4–18.6 | P1, P8 | P1.AC3, P1.AC7, P8.AC2 |
+| W19 | One payment for several invoices; extra becomes credit | §14.4 | P6 | P6.AC2 |
+| W20 | Card fee in the same payment; bank matching without double entry | §14.4, §14.7 | P6, P15 | P6.AC2, P15.AC1, P15.AC2 |
+| W21 | Partial conversion of documents with remaining quantities | §13.3 | P12 | P12.AC1 |
+| W22 | Automatic deposits, progress claims and retention | §13.7, §15.9–15.11, §15.17 | P12, P10b, P17 | P10b.AC2, P17.AC1, P17.AC2 |
+| W23 | Chosen tax rounding; inclusive prices without a fils difference | §11.3, §8 calc_decimals | P4 | P4.AC1, P4.AC10 |
+| W24 | Several taxes per line; withholding settled correctly in the statement | §11.3, §14 | P4, P14 | P4.AC1, P14.AC4 |
+| W25 | E-invoicing without a subscription | §11.7 | P14, P20 | P14.AC1, P14.AC2 |
+| W26 | Ready official letter and certificate templates with stamp and signature | §16 | P8b, P16 | P8b.AC2, P8b.AC3, P16.AC1 |
+| W27 | Price the client's BoQ and return it in the same layout | §15.12 | P17 | P17.AC3 |
+| W28 | Send by email and WhatsApp from the app | §13.10 | P12 | P12.AC4 |
+| W29 | Line profit hidden from customers and staff | §6, §19.29 | P4 | P4.AC11 |
+| W30 | Barcode and fast cash sale | §13.11, §17.11 | P12 | P12.AC3, P12.AC5, P12.AC7 |
 
 ---
 
